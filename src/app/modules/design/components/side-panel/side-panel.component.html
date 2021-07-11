@@ -1,0 +1,24 @@
+<div class="row g-0">
+    <div class="nav nav-pills side-panel" role="tablist"> 
+      <a class="nav-link active" data-bs-toggle="pill" data-bs-target="#template" type="button">
+        <div><i class="fas fa-columns"></i> Mẫu</div>
+      </a>
+      <a class="nav-link" data-bs-toggle="pill" data-bs-target="#upload" type="button">
+          <div><i class="fas fa-upload"></i> Hình ảnh</div>
+      </a>
+      <a class="nav-link" data-bs-toggle="pill" data-bs-target="#resize" type="button">
+          <div><i class="fas fa-arrows-alt"></i> Kích thước</div>
+      </a>      
+    </div>
+    <div class="tab-content">  
+      <div class="tab-pane fade show active" id="template">
+        <app-template></app-template>
+      </div>
+      <div class="tab-pane fade" id="upload">
+        <app-upload></app-upload>
+      </div>
+      <div class="tab-pane fade" id="resize">
+        <app-resize></app-resize>
+      </div>      
+    </div>
+</div>

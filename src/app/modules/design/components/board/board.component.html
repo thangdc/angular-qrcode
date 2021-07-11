@@ -1,0 +1,11 @@
+<app-toolbar 
+    (export)="export($event)" 
+    (draw)="drawClick($event)" 
+    (position)="changePosition($event)">
+</app-toolbar>
+
+<div class="board">
+    <div id="container" 
+    [style.width.px]="template.width" 
+    [style.height.px]="template.height"></div>
+</div>

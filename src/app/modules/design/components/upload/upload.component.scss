@@ -1,0 +1,12 @@
+.picture {
+    width: 45%;
+    position: relative;
+
+    .remove {
+        position: absolute;
+        right: 2px;
+        top: 10px;
+        color: red;
+        cursor: pointer;
+    }
+}

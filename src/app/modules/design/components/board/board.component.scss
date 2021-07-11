@@ -1,0 +1,13 @@
+.board {    
+    overflow: auto;
+    background-color: #f5f8fa;
+    border: solid 1px #cdcdcd;
+    height: calc(100vh - 103px);
+}
+
+#container {
+    background: #fff;
+    border: solid 1px #cdcdcd;
+    margin: 3em auto;
+    box-sizing: border-box;
+}

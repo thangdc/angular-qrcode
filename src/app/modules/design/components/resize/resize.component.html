@@ -1,0 +1,21 @@
+<div class="p-3">    
+    <form [formGroup]="resizeForm" (ngSubmit)="updateTemplate()" novalidate class="needs-validation">
+        <div class="mb-3">
+            <label class="form-label">Chiều rộng (pixel)</label>
+            <input type="number" class="form-control" formControlName="width" [ngClass]="{ 'is-invalid': resizeForm.controls.width.invalid }" />
+            <div class="invalid-feedback" *ngIf="resizeForm.controls.width.invalid">
+                <p *ngIf="resizeForm.controls.width.errors.required">Vui lòng nhập chiều rộng.</p>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Chiều cao (pixel)</label>
+            <input type="number" class="form-control" formControlName="height" [ngClass]="{ 'is-invalid': resizeForm.controls.height.invalid }" />
+            <div class="invalid-feedback" *ngIf="resizeForm.controls.height.invalid">
+                <p *ngIf="resizeForm.controls.height.errors.required">Vui lòng nhập chiều cao.</p>
+            </div>
+        </div>
+        <div class="d-grid">
+            <button type="submit" class="btn btn-primary" [disabled]="!resizeForm.valid">Lưu thay đổi</button>
+        </div>            
+    </form>
+</div>
