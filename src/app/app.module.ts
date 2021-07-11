@@ -12,8 +12,6 @@ import { effects } from './stores';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CoreModule, DesignModule } from './modules';
 import { NotifierModule } from 'angular-notifier';
-import { QuillModule } from 'ngx-quill';
-
 const staticModules = [
   CoreModule,
   LayoutModule,
@@ -36,7 +34,6 @@ const staticModules = [
     }),
     EffectsModule.forRoot(effects),
     NotifierModule,
-    QuillModule.forRoot(),
     ...staticModules
   ],
   providers: [],
