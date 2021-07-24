@@ -11,5 +11,4 @@ export class SidePanelComponent implements OnInit {
 
   ngOnInit(): void {
   }
-
 }

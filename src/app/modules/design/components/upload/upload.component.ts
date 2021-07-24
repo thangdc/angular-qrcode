@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { MessageConsts } from 'src/app/modules/core';
 import { addImageAction, drawImageAction, getImagesSelector, loadImageAction, removeImageAction } from 'src/app/stores';
@@ -9,6 +9,8 @@ import { addImageAction, drawImageAction, getImagesSelector, loadImageAction, re
   styleUrls: ['./upload.component.scss']
 })
 export class UploadComponent implements OnInit {
+
+  @Output() selectImageEvent: EventEmitter<any> = new EventEmitter();
 
   @ViewChild('fileUpload') fileUpload: ElementRef;
   
@@ -56,7 +58,7 @@ export class UploadComponent implements OnInit {
   }
 
   addImageData(item) {
-    this.store.dispatch(drawImageAction({payload: item}));
+    this.selectImageEvent.emit(item);
   }
 
   removeImage(item) {

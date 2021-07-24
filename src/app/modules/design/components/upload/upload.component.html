@@ -1,9 +1,9 @@
-<div class="d-grid p-3">
+<div class="d-grid">
     <div class="mb-3">
         <label class="form-label">Chọn hình ảnh</label>
         <input class="form-control" #fileUpload type="file" accept="image/*" (change)="onFileChanged($event)" />
     </div>        
-    <button class="btn btn-primary" [disabled]="files.length === 0" (click)="saveImages()">Tải hình ảnh</button>
+    <button class="btn btn-primary mb-3" [disabled]="files.length === 0" (click)="saveImages()">Tải hình ảnh</button>
 </div>
 
 <div class="d-flex flex-wrap">

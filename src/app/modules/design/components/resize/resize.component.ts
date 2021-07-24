@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { NotifierService } from 'angular-notifier';
+import { MessageConsts } from 'src/app/modules/core';
 import { getDataSelector, updateTemplateAction } from 'src/app/stores';
 
 @Component({
@@ -38,7 +39,7 @@ export class ResizeComponent implements OnInit {
   updateTemplate() {
     if (this.resizeForm.valid) {
       this.store.dispatch(updateTemplateAction({payload: this.resizeForm.value}));
-      this.notifierService.notify('success', 'hello');
+      this.notifierService.notify('success', MessageConsts.SAVE_SUCCEED);
     }    
   }
 

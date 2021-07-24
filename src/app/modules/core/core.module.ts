@@ -3,9 +3,10 @@ import { CommonModule } from '@angular/common';
 
 import { HttpClientModule } from '@angular/common/http';
 import { ApiService, AuthGuard, AuthService } from './services';
+import { SafeHtmlPipe } from './pipes';
 
 @NgModule({
-  declarations: [],
+  declarations: [SafeHtmlPipe],
   imports: [
     CommonModule,
     HttpClientModule
@@ -14,6 +15,9 @@ import { ApiService, AuthGuard, AuthService } from './services';
     ApiService,
     AuthService,
     AuthGuard
+  ],
+  exports: [
+    SafeHtmlPipe
   ]
 })
 export class CoreModule { }

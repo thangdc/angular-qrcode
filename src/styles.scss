@@ -1,8 +1,13 @@
 /* You can add global styles to this file, and also import other style files */
 @import "../node_modules/bootstrap/scss/bootstrap";
+@import "~angular-notifier/styles";
 
 $header-height: 56px;
 
 .full-height {
     height: calc(100vh - #{$header-height});
+}
+
+.notifier__notification-button {
+    padding: 0 !important;
 }

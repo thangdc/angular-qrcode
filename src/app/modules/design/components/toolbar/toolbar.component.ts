@@ -1,6 +1,10 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Store } from '@ngrx/store';
-import { getShapesSelector } from 'src/app/stores/selectors';
+import { ShapeModel } from 'src/app/shared/models';
+import { removeShapeAction } from 'src/app/stores';
+import { getShapeSelector } from 'src/app/stores/selectors';
+import { ConfigComponent } from '../config/config.component';
 
 @Component({
   selector: 'app-toolbar',
@@ -16,16 +20,40 @@ export class ToolbarComponent implements OnInit {
   elements: any[];
   data: any;
   name: string;
+  isSelected: boolean = false;
+  currentShape: ShapeModel;
 
-  constructor(private store: Store) { }
+  constructor(
+    private store: Store,
+    private modal: NgbModal
+    ) { }
   
   ngOnInit(): void {
-    let that = this;
-    this.store.select(getShapesSelector).subscribe(x => that.elements = x);
+    this.selectedShape();
   }
 
-  drawClick(element) {
-    this.draw.emit(element);
+  openDialog(id) {
+    let ref = this.modal.open(ConfigComponent, { size: 'lg', backdrop: 'static' });
+    ref.componentInstance.data = {
+      id: id
+    };
+  }
+
+  selectedShape() {
+    const that = this;
+    that.store.select(getShapeSelector).subscribe(data => {
+      if (data) {
+        that.isSelected = data !== undefined && data !== null;
+        this.currentShape = data;
+      }
+    });
+  }
+
+  removeShape() {
+    const that = this;
+    if (that.currentShape) {
+      that.store.dispatch(removeShapeAction({id: that.currentShape.id}));
+    }
   }
 
   exportPdf() {
@@ -59,4 +87,6 @@ export class ToolbarComponent implements OnInit {
   changePosition(direction) {
     this.position.emit(direction);
   }
+
+
 }

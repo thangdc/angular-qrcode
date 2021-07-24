@@ -1,0 +1,112 @@
+<div class="modal-header">
+    <h4 class="modal-title">{{ dialogTitle }}</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab">
+                Cơ bản
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" data-bs-target="#background-image" type="button" role="tab">
+                Hình nền
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" data-bs-target="#text" type="button" role="tab">
+                Văn bản
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" data-bs-target="#qrcode" type="button" role="tab">
+                Mã QR Code
+            </a>
+        </li>
+    </ul>   
+    <div class="tab-content mt-2" [formGroup]="configForm">
+        <div class="tab-pane fade show active" id="general" role="tabpanel">
+            <div class="d-flex mb-3">
+                <div class="flex-fill me-2">
+                    <label>Trái</label>
+                    <input type="number" class="form-control" formControlName="left" [ngClass]="{ 'is-invalid': configForm.controls.left.invalid }" />
+                    <div class="invalid-feedback" *ngIf="configForm.controls.left.invalid">
+                        <p *ngIf="configForm.controls.left.errors.required">Vui lòng nhập trái.</p>
+                    </div>
+                </div>
+                <div class="flex-fill me-2">
+                    <label>Trên</label>
+                    <input type="number" class="form-control" formControlName="top" [ngClass]="{ 'is-invalid': configForm.controls.top.invalid }" />
+                    <div class="invalid-feedback" *ngIf="configForm.controls.top.invalid">
+                        <p *ngIf="configForm.controls.top.errors.required">Vui lòng nhập trên.</p>
+                    </div>
+                </div>
+                <div class="flex-fill me-2">
+                    <label>Chiều rộng</label>
+                    <input type="number" class="form-control" formControlName="width" [ngClass]="{ 'is-invalid': configForm.controls.width.invalid }" />
+                    <div class="invalid-feedback" *ngIf="configForm.controls.width.invalid">
+                        <p *ngIf="configForm.controls.width.errors.required">Vui lòng nhập chiều rộng.</p>
+                    </div>
+                </div>
+                <div class="flex-fill">
+                    <label>Chiều cao</label>
+                    <input type="number" class="form-control" formControlName="height" [ngClass]="{ 'is-invalid': configForm.controls.height.invalid }" />
+                    <div class="invalid-feedback" *ngIf="configForm.controls.height.invalid">
+                        <p *ngIf="configForm.controls.height.errors.required">Vui lòng nhập chiều cao.</p>
+                    </div>
+                </div>                
+            </div>
+            <div class="d-flex mb-3">
+                <div class="flex-fill me-2">
+                    <label>Kích thước viền</label>
+                    <input type="number" class="form-control" min="0" formControlName="strokeSize" />
+                </div>
+                <div class="flex-fill me-2">
+                    <label>Độ cong</label>
+                    <input type="number" class="form-control" min="0" formControlName="cornerRadius" />
+                </div>
+                <div class="flex-fill color-size me-2">
+                    <label>Màu viền</label>
+                    <input type="color" class="form-control form-control-color" formControlName="strokeColor" />
+                </div>
+                <div class="flex-fill color-size me-2">
+                    <label>Màu nền</label>
+                    <input type="color" class="form-control form-control-color" formControlName="backgroundColor" />
+                </div>                    
+            </div>
+            <input type="hidden" formControlName="id" />
+            <input type="hidden" formControlName="backgroundImage" />
+            <input type="hidden" formControlName="textImage" />
+
+        </div>
+        <div class="tab-pane fade" id="background-image" role="tabpanel">
+            <app-upload (selectImageEvent)="selectImage($event)"></app-upload>
+        </div>
+        <div class="tab-pane fade mb-3" id="text" role="tabpanel">
+            <angular-editor [placeholder]="'Enter text here...'" formControlName="text" [config]="editorConfig"></angular-editor>
+        </div>
+        <div class="tab-pane fade mb-3" id="qrcode" role="tabpanel">
+            <div id="qrcodeImage" class="d-none"></div>
+            <textarea class="form-control" rows="6" formControlName="qrCode"></textarea>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            Xem trước
+        </div>
+        <div class="card-body">
+            <div class="preview-result">
+                <div id="preview-container"></div>
+            </div>      
+        </div>
+    </div>    
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="activeModal.close()">Đóng</button>
+    <button type="button" class="btn btn-primary" (click)="saveClick()">Lưu</button>
+</div>
+
+<div class="viewhtml" 
+    [style.width.px]="configForm.controls.width.value + extraWidth" 
+    [innerHTML]="configForm.controls.text.value | safeHtml"></div>

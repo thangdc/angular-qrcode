@@ -7,16 +7,6 @@ export const getDesignState = createSelector(
   (state: fromFeature.AppState) => state.design
 );
 
-export const getShapesSelector = createSelector(
-  getDesignState,
-  fromDesign.getShapesReducer
-)
-
-export const getSelectShapeSelector = createSelector(
-  getDesignState,
-  fromDesign.getSelectShapeReducer
-)
-
 export const getDataSelector = createSelector(
   getDesignState,
   fromDesign.getDataReducer
@@ -35,4 +25,14 @@ export const getDrawImageSelector = createSelector(
 export const getTemplateSelector = createSelector(
   getDesignState,
   fromDesign.getTemplateReducer
+)
+
+export const getShapesSelector = createSelector(
+  getDesignState,
+  fromDesign.getShapesReducer
+)
+
+export const getShapeSelector = createSelector(
+  getDesignState,
+  fromDesign.getShapeReducer
 )

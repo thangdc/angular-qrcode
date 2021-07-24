@@ -8,19 +8,9 @@ import { Component, OnInit } from '@angular/core';
 export class TemplateComponent implements OnInit {
 
   constructor() { }
-
+  
   ngOnInit(): void {
-    var quill = new quill('#editor-container', {
-      modules: {
-        toolbar: [
-          [{ header: [1, 2, false] }],
-          ['bold', 'italic', 'underline'],
-          ['image', 'code-block'],
-        ],
-      },
-      placeholder: 'Compose an epic...',
-      theme: 'snow', // or 'bubble'
-    });
   }
 
+  
 }

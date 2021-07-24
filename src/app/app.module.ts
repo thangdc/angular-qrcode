@@ -11,7 +11,10 @@ import { reducers, metaReducers } from './stores/reducers';
 import { effects } from './stores';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CoreModule, DesignModule } from './modules';
+
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { NotifierModule } from 'angular-notifier';
+
 const staticModules = [
   CoreModule,
   LayoutModule,
@@ -33,7 +36,23 @@ const staticModules = [
       metaReducers
     }),
     EffectsModule.forRoot(effects),
-    NotifierModule,
+    NgbModule,
+    NotifierModule.withConfig({
+      position: {
+        horizontal: {
+          position: 'right',
+          distance: 12,
+        },
+        vertical: {
+          position: 'top',
+          distance: 12,
+          gap: 10,
+        }
+      },
+      behaviour: {
+        autoHide: 105000,
+      },
+    }),
     ...staticModules
   ],
   providers: [],

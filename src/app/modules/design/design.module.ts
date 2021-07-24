@@ -9,7 +9,9 @@ import { TemplateComponent } from './components/template/template.component';
 import { UploadComponent } from './components/upload/upload.component';
 import { ResizeComponent } from './components/resize/resize.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NotifierModule } from 'angular-notifier';
+import { ConfigComponent } from './components/config/config.component';
+import { AngularEditorModule } from '@kolkov/angular-editor';
+import { CoreModule } from '../core/core.module';
 
 @NgModule({
   declarations: [
@@ -19,14 +21,16 @@ import { NotifierModule } from 'angular-notifier';
     SidePanelComponent,
     TemplateComponent,
     UploadComponent,
-    ResizeComponent
+    ResizeComponent,
+    ConfigComponent
   ],
   imports: [
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
     DesignRoutingModule,
-    NotifierModule
+    AngularEditorModule,
+    CoreModule
   ]
 })
 export class DesignModule { }

@@ -54,4 +54,40 @@ export class DesignEffects {
             })
         ))
     ));
+
+    addShape$ = createEffect(() => this.actions$.pipe(
+        ofType(DesignAction.addShapeAction),
+        switchMap(item => this.designService.addShape(item.payload).pipe(
+            map(data => {
+                return DesignAction.saveShapeToStoreAction({payload: data});
+            })
+        ))
+    ));
+
+    getShape$ = createEffect(() => this.actions$.pipe(
+        ofType(DesignAction.getShapesAction),
+        switchMap(() => this.designService.getShapes().pipe(
+            map(data => {
+                return DesignAction.saveShapesToStoreAction({payload: data});
+            })
+        ))
+    ));
+
+    updateShape$ = createEffect(() => this.actions$.pipe(
+        ofType(DesignAction.updateShapeAction),
+        switchMap(item => this.designService.updateShape(item.payload).pipe(
+            map(data => {
+                return DesignAction.updateShapeToStoreAction({payload: data});
+            })
+        ))
+    ));
+
+    removeShape$ = createEffect(() => this.actions$.pipe(
+        ofType(DesignAction.removeShapeAction),
+        switchMap(item => this.designService.removeShape(item.id).pipe(
+            map(data => {
+                return DesignAction.removeShapeFromStoreAction({id: item.id});
+            })
+        ))
+    ));
 }

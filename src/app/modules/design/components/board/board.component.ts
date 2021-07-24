@@ -2,19 +2,18 @@ import { Component, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import jsPDF from 'jspdf';
 import Konva from 'konva';
-import { Rect } from 'konva/lib/shapes/Rect';
 import QRCode from 'qrcodejs2';
 import { MessageConsts, ShapeEnums } from 'src/app/modules/core';
 import { 
   drawImageAction,
-  getDataSelector, 
   getDrawImageSelector, 
   getImagesSelector, 
-  getTemplateSelector, 
-  loadDataAction, 
-  loadImageAction, 
-  saveDataAction, 
-  updateTemplateAction
+  getShapesAction, 
+  getShapeSelector, 
+  getShapesSelector, 
+  loadImageAction,
+  selectShapeAction,
+  updateShapeAction
 } from 'src/app/stores';
 
 @Component({
@@ -39,37 +38,16 @@ export class BoardComponent implements OnInit {
   GUIDELINE_OFFSET: number = 5;
 
   dataItems: any[];
+
   constructor(private store: Store) {
     
   }
 
-  ngOnInit(): void {    
-    this.loadImages();
-    this.getTemplateData();
+  ngOnInit(): void {
+    this.initStage(this.template);   
+    this.getShapes();
     this.bindSelectEvents();
-    this.bindZoomEvent();
-    this.bindKeyBoardEvent();
-    this.drawImage();
-    this.bindchangeTemplateEvent();
-  }
-
-  getTemplateData() {
-    const that = this;
-    that.store.dispatch(loadDataAction());
-    that.store.select(getDataSelector).subscribe(data => {
-      if (data) {
-        that.stage = Konva.Node.create(data, that.container); 
-        const item = JSON.parse(data);
-        that.layer = Konva.Layer.create(item.children[0]);
-        that.stage.destroyChildren();
-        that.stage.add(that.layer);
-        this.initStage({ width: item.attrs.width, height: item.attrs.height });
-        that.bindImages(that.stage);
-        that.bindEventsAfterLoad();
-      } else {
-        this.initStage({ width: 800, height: 600 });
-      }      
-    });
+    this.bindSnapGridEvent();
   }
 
   initStage(data: any): void {
@@ -92,19 +70,168 @@ export class BoardComponent implements OnInit {
     }
   }
 
+  getShapes() {
+    const that = this;
+    that.store.dispatch(getShapesAction());
+    that.store.select(getShapesSelector).subscribe(data => {
+      
+      if (that.layer) {
+        that.layer.destroyChildren();
+        that.stage.destroyChildren();
+        that.stage.add(that.layer);
+      }
+
+      if (data && data.length > 0) {
+        for(let item of data) {     
+          that.drawRect(item);
+        }
+      }
+      that.layer.draw();
+      that.bindSelectEvents();
+      that.getSelectedShape();
+    });
+  }
+
+  getSelectedShape() {
+    const that = this;
+    that.store.select(getShapeSelector).subscribe(data => {      
+      that.transfomer.nodes([]);
+      if (data) {
+        const shape = that.stage.find(`#${data.id}`);
+        if (shape && shape.length > 0) {
+          that.transfomer.nodes([shape[0]]);
+        }
+      }
+    });
+  }
+
+  drawRect(item) {
+    const that = this;
+    if (item) {
+      const rect =  new Konva.Rect({
+        x: 0,
+        y: 0,
+        width: item.width,
+        height: item.height,
+        fill: item.backgroundColor,
+        stroke: item.strokeColor,
+        strokeWidth: item.strokeSize,
+        cornerRadius: item.cornerRadius
+      });
+
+      const group = new Konva.Group({
+        id: item.id.toString(),
+        x: item.top,
+        y: item.left,
+        draggable: true,
+        name: 'shape',
+        scaleX: item.scaleX,
+        scaleY: item.scaleY
+      });
+
+      group.add(rect);
+      
+      if (item.textImage) {
+        const textImage = new Image();
+        textImage.onload = () => {
+          if (textImage.width > 0 && textImage.height > 0) {
+            const picture = new Konva.Image({
+              x: 0,
+              y: 0,
+              image: textImage,
+              width: item.width              
+            });
+            group.add(picture);
+          }
+        };
+        textImage.src = item.textImage;            
+      } else if (item.qrCode) {
+        const div = document.createElement('div');
+        new QRCode(div, {
+          text: item.qrCode,
+          width: item.width,
+          height: item.height,
+          colorDark : item.strokeColor,
+          colorLight : item.backgroundColor,
+          correctLevel : QRCode.CorrectLevel.H
+        });        
+        const img = div.getElementsByTagName('img')[0];
+        const picture = new Konva.Image({
+          x: 0,
+          y: 0,
+          image: img,
+          width: item.width              
+        });
+        group.add(picture);
+      }
+
+      that.layer.add(group);
+
+      if (item.backgroundImage) {
+        const backgroundImage = new Image();
+        backgroundImage.onload = () => {
+          if (backgroundImage.width > 0 && backgroundImage.height > 0) {
+            let x = item.width / backgroundImage.width;
+            let y = item.height / backgroundImage.height;
+
+            rect.fill(null);
+            rect.fillPatternImage(backgroundImage);
+            rect.fillPatternScale({x, y});
+            that.layer.draw();
+          }
+        };
+        backgroundImage.src = item.backgroundImage;            
+      }
+
+      group.on('dragend', () => {
+        const nodes = that.transfomer.nodes();
+        if (nodes.length > 0) {
+          for (let node of nodes) {
+            that.store.dispatch(updateShapeAction({payload: {
+              id: parseInt(node.id()),
+              top: node.x(),
+              left: node.y()
+            }}));
+          }
+        } else {
+          that.store.dispatch(updateShapeAction({payload: {
+            id: parseInt(group.id()),
+            top: group.x(),
+            left: group.y()
+          }}));
+        }
+      });
+
+      group.on('transformend', () => {
+        const nodes = that.transfomer.nodes();
+        if (nodes.length > 0) {
+          for (let node of nodes) {
+            that.store.dispatch(updateShapeAction({payload: {
+              id: parseInt(node.id()),
+              top: node.x(),
+              left: node.y(),
+              scaleX: node.scaleX(),
+              scaleY: node.scaleY()
+            }}));
+          }
+        } else {
+          that.store.dispatch(updateShapeAction({payload: {
+            id: parseInt(group.id()),
+            top: group.x(),
+            left: group.y(),
+            scaleX: group.scaleX(),
+            scaleY: group.scaleY()
+          }}));
+        }        
+      });
+    }
+  }
+
   drawClick(data) {
     const that = this;
     if (data) {
-      that.transfomer.nodes([]);        
-      if (data.shapeType === ShapeEnums.Rectangle){
-        const rect =  new Rect(data);
-        that.layer.add(rect);
-        that.transfomer.nodes([rect]);
-      } else if (data.shapeType === ShapeEnums.Circle) {
-        const circle = new Konva.Circle(data);
-        that.layer.add(circle);
-        that.transfomer.nodes([circle]);
-      } else if (data.shapeType === ShapeEnums.Text) {
+      that.transfomer.nodes([]);      
+       if (data.shapeType === ShapeEnums.Text) {
         const text = new Konva.Text({
           x: data.x,
           y: data.y,
@@ -120,7 +247,6 @@ export class BoardComponent implements OnInit {
         });
         that.layer.add(text);
         that.transfomer.nodes([text]);
-        that.bindEditTextEvent(text);
       } else if (data.shapeType === ShapeEnums.QRCode) {
         const div = document.createElement('div');
         new QRCode(div, {
@@ -147,11 +273,12 @@ export class BoardComponent implements OnInit {
         });
         that.layer.add(picture);
         that.transfomer.nodes([picture]);
-      }
-
-      that.saveTemplate();
-      that.bindEventsAfterLoad();      
+      } 
     }
+  }
+
+  selectShape(id) {
+    this.store.dispatch(selectShapeAction({ id: id }));
   }
 
   bindHighlightEvents() {
@@ -174,7 +301,7 @@ export class BoardComponent implements OnInit {
       y: 0,
       width: this.stage.width(),
       height: this.stage.height(),
-      illLinearGradientStartPoint: { x: 0, y: 0 },
+      fillLinearGradientStartPoint: { x: 0, y: 0 },
       fillLinearGradientEndPoint: { x: this.stage.width(), y: this.stage.height() },
       fillLinearGradientColorStops: [
         0,
@@ -202,8 +329,8 @@ export class BoardComponent implements OnInit {
       }
       var box = guideItem.getClientRect();
       // and we can snap to all edges of shapes
-      vertical.concat([box.x, box.x + box.width, box.x + box.width / 2]);
-      horizontal.concat([box.y, box.y + box.height, box.y + box.height / 2]);
+      vertical.push(box.x, box.x + box.width, box.x + box.width / 2);
+      horizontal.push(box.y, box.y + box.height, box.y + box.height / 2);
     });
     return {
       vertical: vertical.flat(),
@@ -354,6 +481,7 @@ export class BoardComponent implements OnInit {
       
       // find possible snapping lines
       var lineGuideStops = that.getLineGuideStops(e.target);
+      
       // find snapping points of current object
       var itemBounds = that.getObjectSnappingEdges(e.target);
 
@@ -415,7 +543,7 @@ export class BoardComponent implements OnInit {
       e.target.absolutePosition(absPos);
     });
 
-    this.layer.on('dragend', function (e) {
+    that.layer.on('dragend', function (e) {
       // clear all previous lines on the screen
       that.layer.find('.guid-line').forEach((l) => l.destroy());
     });
@@ -425,25 +553,19 @@ export class BoardComponent implements OnInit {
     let that = this;
 
     that.transfomer = new Konva.Transformer({
-      keepRatio: true,
-      ignoreStroke: true,
-      enabledAnchors: [
-        'top-left',
-        'top-right',
-        'bottom-left',
-        'bottom-right',
-      ]
+      ignoreStroke: true
     });    
+    
     that.layer.add(that.transfomer);
 
     // add a new feature, lets add ability to draw selection rectangle
-    var selectionRectangle = new Konva.Rect({
+    const selectionRectangle = new Konva.Rect({
       fill: 'rgba(0,0,255,0.5)',
       visible: false
     });
     that.layer.add(selectionRectangle);
 
-    var x1, y1, x2, y2;
+    let x1, y1, x2, y2;
     that.stage.on('mousedown touchstart', (e) => {
       // do nothing if we mousedown on any shape
       if (e.target !== that.stage) {
@@ -492,6 +614,10 @@ export class BoardComponent implements OnInit {
         Konva.Util.haveIntersection(box, shape.getClientRect())
       );
       that.transfomer.nodes(selected);
+
+      if (selected.length === 0) {
+        that.selectShape(0);
+      }
     });
 
     // clicks should select/deselect shapes
@@ -502,34 +628,34 @@ export class BoardComponent implements OnInit {
       }
 
       // if click on empty area - remove all selections
-      if (e.target === that.stage) {
-        that.transfomer.nodes([]);
+      if (e.target.parent === that.stage) {
+        that.transfomer.nodes([]);        
         return;
       }
 
       // do nothing if clicked NOT on our rectangles
-      if (!e.target.hasName('shape')) {
+      if (!e.target.parent.hasName('shape')) {
         return;
       }
-
       // do we pressed shift or ctrl?
       const metaPressed = e.evt.shiftKey || e.evt.ctrlKey || e.evt.metaKey;
-      const isSelected = that.transfomer.nodes().indexOf(e.target) >= 0;
+      const isSelected = that.transfomer.nodes().indexOf(e.target.parent) >= 0;
 
       if (!metaPressed && !isSelected) {
         // if no key pressed and the node is not selected
         // select just one
-        that.transfomer.nodes([e.target]);
+        that.transfomer.nodes([e.target.parent]);
+        that.selectShape(parseInt(e.target.parent.id()));
       } else if (metaPressed && isSelected) {
         // if we pressed keys and node was selected
         // we need to remove it from selection:
         const nodes = that.transfomer.nodes().slice(); // use slice to have new copy of array
         // remove node from array
-        nodes.splice(nodes.indexOf(e.target), 1);
+        nodes.splice(nodes.indexOf(e.target.parent), 1);
         that.transfomer.nodes(nodes);
       } else if (metaPressed && !isSelected) {
         // add the node into selection
-        const nodes = that.transfomer.nodes().concat([e.target]);
+        const nodes = that.transfomer.nodes().concat([e.target.parent]);
         that.transfomer.nodes(nodes);
       }
     });
@@ -580,17 +706,11 @@ export class BoardComponent implements OnInit {
             }
           }
           that.transfomer.nodes([]);
-          that.saveTemplate();
         }
       }
       
       e.preventDefault();
     });
-  }
-
-  saveTemplate() {
-    const that = this;
-    this.store.dispatch(saveDataAction({ payload: that.stage.toJSON()}));
   }
 
   export(event) {
@@ -625,24 +745,6 @@ export class BoardComponent implements OnInit {
     document.body.removeChild(link);
   }
 
-  bindEventsAfterLoad() {
-    let that = this;
-    const shapes = that.stage.find('.shape');
-    shapes.forEach(x => { 
-      x.on('dragend', () => {
-        this.saveTemplate();
-      });
-
-      x.on('transform', () => {
-        this.saveTemplate();
-      });
-
-      if(x.className === 'Text') {
-        that.bindEditTextEvent(x);
-      }
-    });
-  }
-
   drawImage() {
     let that = this;
     this.store.select(getDrawImageSelector).subscribe(data => {
@@ -666,8 +768,6 @@ export class BoardComponent implements OnInit {
         that.transfomer.nodes([picture]);
 
         that.store.dispatch(drawImageAction({payload: null}));
-        this.saveTemplate();
-        that.bindEventsAfterLoad();
       };
     });
   }
@@ -675,16 +775,6 @@ export class BoardComponent implements OnInit {
   calculateAspectRatioFit(srcWidth, srcHeight, maxWidth, maxHeight) {
     var ratio = Math.min(maxWidth / srcWidth, maxHeight / srcHeight);
     return { width: srcWidth*ratio, height: srcHeight*ratio };
-  }
-
-  bindchangeTemplateEvent() {
-    this.store.select(getTemplateSelector).subscribe(data => {
-      if (data) {
-        this.initStage(data);
-        this.saveTemplate();
-        this.store.dispatch(updateTemplateAction({ payload: null }));
-      }
-    });
   }
 
   bindImages(item) {
@@ -736,142 +826,7 @@ export class BoardComponent implements OnInit {
           node.moveDown();
         }   
       }
-
-      this.saveTemplate();
     }
-  }
-
-  bindEditTextEvent(node) {
-    const that = this;
-    node.on('dblclick dbltap', () => {
-      // hide text node and transformer:
-      node.hide();
-      that.transfomer.hide();
-
-      // create textarea over canvas with absolute position
-      // first we need to find position for textarea
-      // how to find it?
-
-      // at first lets find position of text node relative to the stage:
-      var textPosition = node.absolutePosition();
-
-      // so position of textarea will be the sum of positions above:
-      var areaPosition = {
-        x: that.stage.container().offsetLeft + textPosition.x,
-        y: that.stage.container().offsetTop + textPosition.y,
-      };
-
-      // create textarea and style it
-      var textarea = document.createElement('textarea');
-      document.body.appendChild(textarea);
-
-      // apply many styles to match text on canvas as close as possible
-      // remember that text rendering on canvas and on the textarea can be different
-      // and sometimes it is hard to make it 100% the same. But we will try...
-      textarea.value = node.text();
-      textarea.style.position = 'absolute';
-      textarea.style.top = areaPosition.y + 'px';
-      textarea.style.left = areaPosition.x + 'px';
-      textarea.style.width = node.width() - node.padding() * 2 + 'px';
-      textarea.style.height =
-        node.height() - node.padding() * 2 + 5 + 'px';
-      textarea.style.fontSize = node.fontSize() + 'px';
-      textarea.style.border = 'none';
-      textarea.style.padding = '0px';
-      textarea.style.margin = '0px';
-      textarea.style.overflow = 'hidden';
-      textarea.style.background = 'none';
-      textarea.style.outline = 'none';
-      textarea.style.resize = 'none';
-      textarea.style.lineHeight = node.lineHeight();
-      textarea.style.fontFamily = node.fontFamily();
-      textarea.style.transformOrigin = 'left top';
-      textarea.style.textAlign = node.align();
-      textarea.style.color = node.fill();
-      let rotation = node.rotation();
-      var transform = '';
-      if (rotation) {
-        transform += 'rotateZ(' + rotation + 'deg)';
-      }
-
-      var px = 0;
-      // also we need to slightly move textarea on firefox
-      // because it jumps a bit
-      var isFirefox =
-        navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
-      if (isFirefox) {
-        px += 2 + Math.round(node.fontSize() / 20);
-      }
-      transform += 'translateY(-' + px + 'px)';
-
-      textarea.style.transform = transform;
-
-      // reset height
-      textarea.style.height = 'auto';
-      // after browsers resized it we can set actual value
-      textarea.style.height = textarea.scrollHeight + 3 + 'px';
-
-      textarea.focus();
-
-      function removeTextarea() {
-        textarea.parentNode.removeChild(textarea);
-        window.removeEventListener('click', handleOutsideClick);
-        node.show();
-        that.transfomer.show();
-        that.transfomer.forceUpdate();
-      }
-
-      function setTextareaWidth(newWidth) {
-        if (!newWidth) {
-          // set width for placeholder
-          newWidth = node.placeholder.length * node.fontSize();
-        }
-        // some extra fixes on different browsers
-        var isSafari = /^((?!chrome|android).)*safari/i.test(
-          navigator.userAgent
-        );
-        var isFirefox =
-          navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
-        if (isSafari || isFirefox) {
-          newWidth = Math.ceil(newWidth);
-        }
-
-        textarea.style.width = newWidth + 'px';
-      }
-
-      textarea.addEventListener('keydown', function (e) {
-        // hide on enter
-        // but don't hide on shift + enter
-        if (e.keyCode === 13 && !e.shiftKey) {
-          node.text(textarea.value);
-          removeTextarea();
-          that.saveTemplate();
-        }
-        // on esc do not set value back to node
-        if (e.keyCode === 27) {
-          removeTextarea();
-        }
-      });
-
-      textarea.addEventListener('keydown', function (e) {
-        let scale = node.getAbsoluteScale().x;
-        setTextareaWidth(node.width() * scale);
-        textarea.style.height = 'auto';
-        textarea.style.height =
-          textarea.scrollHeight + node.fontSize() + 'px';
-      });
-
-      function handleOutsideClick(e) {
-        if (e.target !== textarea) {
-          node.text(textarea.value);
-          removeTextarea();
-          that.saveTemplate();
-        }
-      }
-      setTimeout(() => {
-        window.addEventListener('click', handleOutsideClick);
-      });
-    });
   }
 }
 
