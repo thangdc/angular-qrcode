@@ -3,7 +3,8 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { NotifierService } from 'angular-notifier';
 import { MessageConsts } from 'src/app/modules/core';
-import { getDataSelector, updateTemplateAction } from 'src/app/stores';
+import { TemplateModel } from 'src/app/shared/models';
+import { getDataSelector, getTemplateSelector, updateTemplateAction } from 'src/app/stores';
 
 @Component({
   selector: 'app-resize',
@@ -13,24 +14,17 @@ import { getDataSelector, updateTemplateAction } from 'src/app/stores';
 export class ResizeComponent implements OnInit {
 
   resizeForm: FormGroup;
-  template: any;
+  template: TemplateModel = new TemplateModel();
 
   constructor(private store: Store,
     private notifierService: NotifierService) { }
 
   ngOnInit(): void {
-    this.template = {
-      width: 800,
-      height: 600
-    };
     
-    this.store.select(getDataSelector).subscribe(data => {
+    this.store.select(getTemplateSelector).subscribe(data => {
+      this.template = new TemplateModel();
       if (data) {
-        const items = JSON.parse(data);
-        this.template = { 
-          width: items.attrs.width,
-          height: items.attrs.height
-        }
+        this.template = data;
       }
       this.initForm();
     });

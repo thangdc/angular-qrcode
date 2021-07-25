@@ -36,3 +36,8 @@ export const getShapeSelector = createSelector(
   getDesignState,
   fromDesign.getShapeReducer
 )
+
+export const getExportSelector = createSelector(
+  getDesignState,
+  fromDesign.getExportReducer
+)

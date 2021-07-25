@@ -10,12 +10,22 @@ export class ShapeModel {
     backgroundImage: string;
     cornerRadius: number;
     opacity: number;
-    dragable: boolean;
     text: string;
     textImage: string;
     scaleX: number;
     scaleY: number;
     qrCode: string;
+    rotation: number;
+    draggable: boolean;
+    fontFamily: string;
+    fontSize: number;
+    fontStyle: string;
+    align: string;
+    verticalAlign: string;
+    textColor: string;
+    textPadding: number;
+    textLineHeight: number;
+    index: number;
 
     constructor() {
         this.id = 0;
@@ -29,11 +39,21 @@ export class ShapeModel {
         this.backgroundImage = '';
         this.cornerRadius = 0;
         this.opacity = 1;
-        this.dragable = true;
         this.text = '';
         this.textImage = '';
         this.scaleX = 1;
         this.scaleY = 1; 
         this.qrCode = '';
+        this.rotation = 0;
+        this.draggable = true;
+        this.fontFamily = 'Calibri';
+        this.fontSize = 12;
+        this.fontStyle = 'normal';
+        this.align = 'left';
+        this.verticalAlign = 'top';
+        this.textColor = '#000000';
+        this.textPadding = 0;
+        this.textLineHeight = 1;
+        this.index = 1;
     }
 }

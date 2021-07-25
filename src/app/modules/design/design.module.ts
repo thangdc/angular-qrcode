@@ -12,6 +12,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ConfigComponent } from './components/config/config.component';
 import { AngularEditorModule } from '@kolkov/angular-editor';
 import { CoreModule } from '../core/core.module';
+import { ExportComponent } from './components/export/export.component';
 
 @NgModule({
   declarations: [
@@ -22,7 +23,8 @@ import { CoreModule } from '../core/core.module';
     TemplateComponent,
     UploadComponent,
     ResizeComponent,
-    ConfigComponent
+    ConfigComponent,
+    ExportComponent
   ],
   imports: [
     CommonModule,

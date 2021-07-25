@@ -30,30 +30,8 @@ export class ConfigComponent implements OnInit {
   timeout: any = null;
   dialogTitle: string = MessageConsts.ADD_TITLE;
 
-  editorConfig: AngularEditorConfig = {
-    editable: true,
-    sanitize: false,
-    toolbarHiddenButtons: [
-      [
-        'undo',
-        'redo',
-        'indent',
-        'outdent',
-      ],
-      [
-        'customClasses',
-        'link',
-        'unlink',
-        'insertImage',
-        'insertVideo',
-        'insertHorizontalRule',
-        'removeFormat',
-        'toggleEditorMode'
-      ]
-    ]
-  };
-
   textPicture: any;
+  textControl: any;
 
   constructor(public activeModal: NgbActiveModal,
     private store: Store) { }
@@ -77,7 +55,18 @@ export class ConfigComponent implements OnInit {
       cornerRadius: new FormControl(model.cornerRadius),
       text: new FormControl(model.text),
       textImage: new FormControl(model.textImage),
-      qrCode: new FormControl(model.qrCode)
+      qrCode: new FormControl(model.qrCode),
+      opacity: new FormControl(model.opacity),
+      draggable: new FormControl(model.draggable),
+      fontFamily: new FormControl(model.fontFamily),
+      fontSize: new FormControl(model.fontSize),
+      fontStyle: new FormControl(model.fontStyle),
+      align: new FormControl(model.align),
+      verticalAlign: new FormControl(model.verticalAlign),
+      textColor: new FormControl(model.textColor),
+      textPadding: new FormControl(model.textPadding),
+      textLineHeight: new FormControl(model.textLineHeight),
+      index: new FormControl(model.index)
     });
 
     this.formChange();
@@ -90,7 +79,7 @@ export class ConfigComponent implements OnInit {
 
     if(this.data.id === 0) {
       this.dialogTitle = MessageConsts.ADD_TITLE;
-      this.configForm.patchValue({id: new Date().getTime()});
+      this.configForm.patchValue({id: new Date().getTime(), opacity: 100});
     } else {
       this.dialogTitle = MessageConsts.EDIT_TITLE;
       this.store.select(getShapeSelector).subscribe(data => {                
@@ -116,7 +105,18 @@ export class ConfigComponent implements OnInit {
         cornerRadius: data.cornerRadius,
         text: data.text,
         textImage: data.textImage,
-        qrCode: data.qrCode
+        qrCode: data.qrCode,
+        opacity: data.opacity * 100,
+        draggable: data.draggable,
+        fontFamily: data.fontFamily,
+        fontSize: data.fontSize,
+        fontStyle: data.fontStyle,
+        align: data.align,
+        verticalAlign: data.verticalAlign,
+        textColor: data.textColor,
+        textPadding: data.textPadding,
+        textLineHeight: data.textLineHeight,
+        index: data.index
       });
     }
   }
@@ -124,20 +124,30 @@ export class ConfigComponent implements OnInit {
   formChange() {
     const that = this;
     that.configForm.valueChanges.subscribe(data => {
+      data.opacity = data.opacity / 100;
       that.shape.width(data.width);
       that.shape.height(data.height);
       that.shape.fill(data.backgroundColor);
       that.shape.stroke(data.strokeColor);
       that.shape.strokeWidth(data.strokeSize);
       that.shape.cornerRadius(data.cornerRadius);
+      that.shape.opacity(data.opacity);
       that.stage.width(data.width + that.extraWidth);
       that.stage.height(data.height + that.extraWidth);
-      that.showImage(data.backgroundImage, data.width, data.height);
+      that.textControl.width(data.width);
+      that.textControl.height(data.height);
+      that.textControl.opacity(data.opacity);
+      that.textControl.fontFamily(data.fontFamily);
+      that.textControl.fontSize(data.fontSize);
+      that.textControl.fontStyle(data.fontStyle);
+      that.textControl.align(data.align);
+      that.textControl.verticalAlign(data.verticalAlign);
+      that.textControl.fill(data.textColor);
+      that.textControl.padding(data.textPadding);
+      that.textControl.lineHeight(data.textLineHeight);
+      that.showImage(data.backgroundImage, data.width, data.height, data.opacity);
       that.generateQRCode(data);
-    });
-
-    that.configForm.controls['text'].valueChanges.subscribe(text => {
-      that.requestTextUpdate(text);
+      that.showText(data);
     });
   }
 
@@ -161,7 +171,8 @@ export class ConfigComponent implements OnInit {
       fill: this.configForm.controls.backgroundColor.value,
       stroke: this.configForm.controls.strokeColor.value,
       strokeWidth: +this.configForm.controls.strokeSize.value,
-      cornerRadius: +this.configForm.controls.cornerRadius.value
+      cornerRadius: +this.configForm.controls.cornerRadius.value,
+      opacity: this.configForm.controls.opacity.value
     });
     this.layer.add(rect);
     this.shape = rect;
@@ -170,24 +181,38 @@ export class ConfigComponent implements OnInit {
       x: 0,
       y: 0,
       image: null,
-      width: +this.configForm.controls.width.value
+      width: +this.configForm.controls.width.value,
+      opacity: this.configForm.controls.opacity.value
     });
 
     this.layer.add(image);
     this.textPicture = image;
+
+    var text = new Konva.Text({
+      width: this.configForm.controls.width.value,
+      height: this.configForm.controls.height.value,
+      text: this.configForm.controls.text.value,
+      fontSize: 30,
+      fontFamily: 'Calibri',
+      fill: this.configForm.controls.strokeColor.value
+    });
+
+    this.layer.add(text);
+    this.textControl = text;
   }
 
   selectImage(item) {
     if (!item) return;    
     const shapeWidth = +this.configForm.controls.width.value;
     const shapeHeight = +this.configForm.controls.height.value;
-    this.showImage(item.data, shapeWidth, shapeHeight);
+    const opacity = +this.configForm.controls.opacity.value;
+    this.showImage(item.data, shapeWidth, shapeHeight, opacity);
     if (item.data !== this.configForm.controls.backgroundImage.value) {
       this.configForm.patchValue({ backgroundImage: item.data });
     }
   }
 
-  showImage(data, shapeWidth, shapeHeight) {
+  showImage(data, shapeWidth, shapeHeight, opacity) {
     if (!data) return;
     const that = this;
     const image = new Image();
@@ -198,6 +223,7 @@ export class ConfigComponent implements OnInit {
         that.shape.fill(null);
         that.shape.fillPatternImage(image);
         that.shape.fillPatternScale({x: x, y: y});
+        that.shape.opacity(opacity);
         that.layer.draw();
       }
     };
@@ -215,39 +241,7 @@ export class ConfigComponent implements OnInit {
     }
   }
 
-  renderText() {
-    const that = this;
-    if (document.querySelector('.viewhtml')) {
-      html2canvas(document.querySelector('.viewhtml'), {
-        backgroundColor: 'rgba(0,0,0,0)',
-      }).then(result => {        
-        that.textPicture.image(null);
-        if (result && result.width > 0 && result.height > 0) {
-          that.textPicture.image(result);
-          if (result.toDataURL() !== that.configForm.controls.textImage.value) {
-            that.configForm.patchValue({ textImage: result.toDataURL() });
-          }
-        }
-      });
-    }
-  }
-
-  requestTextUpdate(text) {
-    if (!text) return;
-
-    const that = this;
-    if (that.timeout) {
-      return;
-    }
-    that.timeout = setTimeout(function () {
-      that.timeout = null;
-      that.renderText();
-    }, 500);
-  }
-
-  generateQRCode(data) {
-    if (data.text) return;
-    
+  generateQRCode(data) {    
     if (data.qrCode) {
       const div = document.createElement('div');
       new QRCode(div, {
@@ -260,8 +254,15 @@ export class ConfigComponent implements OnInit {
       });        
       const img = div.getElementsByTagName('img')[0];
       this.textPicture.image(img);
+      this.textPicture.width(data.width);
+      this.textPicture.height(data.height);
+      this.textPicture.opacity(data.opacity);
     } else {
       this.textPicture.image(null);
     }
+  }
+
+  showText(data) {
+    this.textControl.text(data.text);
   }
 }

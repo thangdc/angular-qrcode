@@ -1,0 +1,26 @@
+<div class="modal-header">
+    <h4 class="modal-title">Xuất ra tập tin</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
+</div>
+
+<div class="modal-body">
+    <form [formGroup]="exportForm">
+        <div>
+            <div class="mb-3">
+                <label>Tên</label>
+                <input type="text" class="form-control" formControlName="name" />
+            </div>
+            <div class="mb-3">
+                <label>Loại</label>
+                <select class="form-control" formControlName="type">
+                    <option value="pdf">PDF</option>
+                    <option value="image">Hình ảnh</option>
+                </select>
+            </div>
+        </div>
+    </form>
+</div>    
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="activeModal.close()">Đóng</button>
+    <button type="button" class="btn btn-primary" (click)="saveClick()">Xuất</button>
+</div>

@@ -5,6 +5,7 @@ import { ShapeModel } from 'src/app/shared/models';
 import { removeShapeAction } from 'src/app/stores';
 import { getShapeSelector } from 'src/app/stores/selectors';
 import { ConfigComponent } from '../config/config.component';
+import { ExportComponent } from '../export/export.component';
 
 @Component({
   selector: 'app-toolbar',
@@ -15,11 +16,9 @@ export class ToolbarComponent implements OnInit {
 
   @Output() export: EventEmitter<any> = new EventEmitter();
   @Output() draw: EventEmitter<any> = new EventEmitter();
-  @Output() position: EventEmitter<any> = new EventEmitter();
 
   elements: any[];
   data: any;
-  name: string;
   isSelected: boolean = false;
   currentShape: ShapeModel;
 
@@ -41,11 +40,9 @@ export class ToolbarComponent implements OnInit {
 
   selectedShape() {
     const that = this;
-    that.store.select(getShapeSelector).subscribe(data => {
-      if (data) {
-        that.isSelected = data !== undefined && data !== null;
-        this.currentShape = data;
-      }
+    that.store.select(getShapeSelector).subscribe(data => {      
+      that.isSelected = data !== undefined && data !== null;
+      this.currentShape = data;
     });
   }
 
@@ -56,37 +53,7 @@ export class ToolbarComponent implements OnInit {
     }
   }
 
-  exportPdf() {
-    this.data = {
-      type: 'pdf',
-      fileName: `design_${new Date().getTime()}.pdf`
-    };
-    //this.export.emit(this.data);
-  }
-
-  exportImage() {
-    this.data = {
-      type: 'image',
-      fileName: `design_${new Date().getTime()}.png`
-    }
-    //this.export.emit(this.data);
-  }
-
-  exportTemplate() {
-    this.data = {
-      type: 'template',
-      fileName: 'Template'
-    }
-    //this.export.emit(this.data);
-  }
-
   exportData() {
-    alert(this.name);
+    this.modal.open(ExportComponent, { backdrop: 'static' });
   }
-
-  changePosition(direction) {
-    this.position.emit(direction);
-  }
-
-
 }

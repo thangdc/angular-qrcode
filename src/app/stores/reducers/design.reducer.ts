@@ -3,7 +3,6 @@ import { ShapeModel } from 'src/app/shared/models';
 import * as DesignAction from '../actions/design.action';
 
 export interface DesignState {
-    templates: {}[];
     images: any[];
     shapes: ShapeModel[];
     data: string;    
@@ -11,18 +10,19 @@ export interface DesignState {
         image: any;
         template: any;
         shape: ShapeModel;
+        export: any;
     }
 }
 
 export const initialDesignState: DesignState = {
-    templates: [],
     images: [],
     shapes: [],
     data: null,
     events: {
         image: null,
         template: null,
-        shape: null
+        shape: null,
+        export: null
     }
 }
 
@@ -40,7 +40,7 @@ const reducer = createReducer(
         let index = state.shapes.map(x => x.id).indexOf(action.payload.id);
         const newArray = [...state.shapes];
         newArray[index] = action.payload;
-        return {...state, shapes: newArray, events: { ...state.events, shape: action.payload } };
+        return {...state, shapes: newArray.sort((x, y) => x.index - y.index), events: { ...state.events, shape: action.payload } };
     }),
     on(DesignAction.updateShapeSucceedAction, (state, action) => ({...state, events: { ...state.events, shape: action.payload }})),
     on(DesignAction.selectShapeAction, (state, action) => {
@@ -50,7 +50,8 @@ const reducer = createReducer(
     on(DesignAction.removeShapeFromStoreAction, (state, action) => {
         const shapes = state.shapes.filter(x => x.id !== action.id);
         return ({ ...state, shapes: shapes})
-    })
+    }),
+    on(DesignAction.exportDesignAction, (state, action) => ({...state, events: { ...state.events, export: action.payload }}))
 );
   
 export function designReducer(state: DesignState | undefined, action: Action) {
@@ -63,3 +64,4 @@ export const getImagesReducer = (state: DesignState) => state.images;
 export const getDrawImageReducer = (state: DesignState) => state.events?.image;
 export const getTemplateReducer = (state: DesignState) => state.events?.template;
 export const getShapeReducer = (state: DesignState) => state.events?.shape;
+export const getExportReducer = (state: DesignState) => state.events?.export;

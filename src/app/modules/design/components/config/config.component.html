@@ -75,6 +75,27 @@
                     <input type="color" class="form-control form-control-color" formControlName="backgroundColor" />
                 </div>                    
             </div>
+            <div class="d-flex mb-3">
+                <div class="me-3">
+                    <div class="form-check form-switch">
+                        <label class="form-check-label">
+                            Di chuyển
+                            <input class="form-check-input" formControlName="draggable" type="checkbox" />
+                        </label>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center">                    
+                    <label class="me-2">Độ trong suốt</label>                        
+                    <input type="range" formControlName="opacity" min="0" max="100" step="1" />
+                </div>
+            </div>
+            <div class="d-flex mb-3">
+                <div>
+                    <label>Index</label>
+                    <input type="number" class="form-control" formControlName="index" />
+                </div>       
+            </div>
+
             <input type="hidden" formControlName="id" />
             <input type="hidden" formControlName="backgroundImage" />
             <input type="hidden" formControlName="textImage" />
@@ -84,7 +105,53 @@
             <app-upload (selectImageEvent)="selectImage($event)"></app-upload>
         </div>
         <div class="tab-pane fade mb-3" id="text" role="tabpanel">
-            <angular-editor [placeholder]="'Enter text here...'" formControlName="text" [config]="editorConfig"></angular-editor>
+            <div class="d-flex">
+                <div class="me-2">
+                    <label>Kích thước chữ</label>
+                    <input type="number" class="form-control" formControlName="fontSize" />
+                </div>
+                <div class="me-2">
+                    <label>Kiểu chữ</label>
+                    <select class="form-control" formControlName="fontStyle">
+                        <option value="normal">Bình thường</option>
+                        <option value="bold">In đậm</option>
+                        <option value="italic">In nghiên</option>
+                    </select>
+                </div>
+                <div class="me-2">
+                    <label>Canh ngang</label>
+                    <select class="form-control" formControlName="align">
+                        <option value="left">Trái</option>
+                        <option value="center">Giữa</option>
+                        <option value="right">Phải</option>
+                    </select>
+                </div>
+                <div class="me-2">
+                    <label>Canh dọc</label>
+                    <select class="form-control" formControlName="verticalAlign">
+                        <option value="top">Trên</option>
+                        <option value="middle">Giữa</option>
+                        <option value="bottom">Dưới</option>
+                    </select>
+                </div>                
+            </div>
+            <div class="d-flex">
+                <div class="me-2">
+                    <label>Đệm</label>
+                    <input type="number" class="form-control" formControlName="textPadding" />
+                </div>
+                <div class="me-2">
+                    <label>Khoảng cách dòng</label>
+                    <input type="number" class="form-control" formControlName="textLineHeight" />
+                </div>                
+                <div class="me-2">
+                    <label>Màu chữ</label>
+                    <input type="color" class="form-control form-control-color" formControlName="textColor" />
+                </div>
+            </div>
+            <div class="mt-3">
+                <textarea class="form-control" rows="6" formControlName="text"></textarea>
+            </div>
         </div>
         <div class="tab-pane fade mb-3" id="qrcode" role="tabpanel">
             <div id="qrcodeImage" class="d-none"></div>
@@ -106,7 +173,3 @@
     <button type="button" class="btn btn-secondary" (click)="activeModal.close()">Đóng</button>
     <button type="button" class="btn btn-primary" (click)="saveClick()">Lưu</button>
 </div>
-
-<div class="viewhtml" 
-    [style.width.px]="configForm.controls.width.value + extraWidth" 
-    [innerHTML]="configForm.controls.text.value | safeHtml"></div>

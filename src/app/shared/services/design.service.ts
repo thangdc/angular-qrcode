@@ -66,7 +66,10 @@ export class DesignService {
 
     getShapes() : Observable<any> {
         const data = localStorage.getItem(this.DATA_SHAPE_KEY);
-        const items = JSON.parse(data);
+        let items = JSON.parse(data);
+        if (items.length > 0) {
+            items = items.sort((x, y) => x.index - y.index);
+        }
         return of(items);
     }
 

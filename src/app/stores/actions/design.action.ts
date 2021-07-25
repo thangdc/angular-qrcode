@@ -28,6 +28,7 @@ const SELECT_SHAPE = "[Design] Select shape";
 const REMOVE_SHAPE = "[Design] Remove shape";
 const REMOVE_SHAPE_FROM_STORE = "[Design] Remove shape from store";
 const SElECTED_SHAPE = "[Design] Selected shape";
+const EXPORT_DESIGN = "[Design] Export design";
 
 export const loadDataAction = createAction(
     LOAD_DATA
@@ -138,4 +139,9 @@ export const removeShapeFromStoreAction = createAction(
 
 export const selectedShapeAction = createAction(
     SElECTED_SHAPE
+)
+
+export const exportDesignAction = createAction(
+    EXPORT_DESIGN,
+    props<{ payload: any}>()
 )

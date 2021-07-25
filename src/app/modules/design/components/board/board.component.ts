@@ -1,20 +1,24 @@
 import { Component, OnInit } from '@angular/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Store } from '@ngrx/store';
-import jsPDF from 'jspdf';
+import jsPDF, { ShadingPattern } from 'jspdf';
 import Konva from 'konva';
 import QRCode from 'qrcodejs2';
-import { MessageConsts, ShapeEnums } from 'src/app/modules/core';
+import { CommonConsts, MessageConsts } from 'src/app/modules/core/constants';
+import { TemplateModel } from 'src/app/shared/models';
+
 import { 
-  drawImageAction,
-  getDrawImageSelector, 
-  getImagesSelector, 
+  exportDesignAction,
+  getExportSelector,
   getShapesAction, 
   getShapeSelector, 
   getShapesSelector, 
-  loadImageAction,
+  getTemplateSelector, 
+  removeShapeAction, 
   selectShapeAction,
-  updateShapeAction
+  updateShapeAction,
 } from 'src/app/stores';
+import { ConfigComponent } from '../config/config.component';
 
 @Component({
   selector: 'app-board',
@@ -29,28 +33,40 @@ export class BoardComponent implements OnInit {
   shapes: any = [];
   images: any = [];
 
-  template: any = {
-    width: 800,
-    height: 600
-  };
+  currentShape: any;
+
+  template: TemplateModel = new TemplateModel();
 
   container: string = 'container';
   GUIDELINE_OFFSET: number = 5;
 
-  dataItems: any[];
-
-  constructor(private store: Store) {
+  constructor(private store: Store,
+    private modal: NgbModal) {
     
   }
 
   ngOnInit(): void {
-    this.initStage(this.template);   
+    this.bindTemplate();
     this.getShapes();
     this.bindSelectEvents();
     this.bindSnapGridEvent();
+    this.bindKeyBoardEvent();
+    this.bindExportEvent();
   }
 
-  initStage(data: any): void {
+  bindTemplate() {
+    const that = this;
+    that.store.select(getTemplateSelector).subscribe(data => {
+      that.template = new TemplateModel();
+      if (data) {
+        that.template = data;
+      }
+      that.initStage();
+    });
+  }
+
+  initStage(): void {
+    const data = this.template;
     if (!this.stage) {
       this.stage = new Konva.Stage({
         container: this.container,
@@ -63,18 +79,12 @@ export class BoardComponent implements OnInit {
       this.stage.width(data.width);
       this.stage.height(data.height);
     }
-
-    this.template = {
-      width: this.stage.width(),
-      height: this.stage.height()
-    }
   }
 
   getShapes() {
     const that = this;
     that.store.dispatch(getShapesAction());
     that.store.select(getShapesSelector).subscribe(data => {
-      
       if (that.layer) {
         that.layer.destroyChildren();
         that.stage.destroyChildren();
@@ -82,8 +92,8 @@ export class BoardComponent implements OnInit {
       }
 
       if (data && data.length > 0) {
-        for(let item of data) {     
-          that.drawRect(item);
+        for(let item of data) {
+          that.drawItem(item);
         }
       }
       that.layer.draw();
@@ -96,226 +106,188 @@ export class BoardComponent implements OnInit {
     const that = this;
     that.store.select(getShapeSelector).subscribe(data => {      
       that.transfomer.nodes([]);
+      that.currentShape = null;
       if (data) {
         const shape = that.stage.find(`#${data.id}`);
         if (shape && shape.length > 0) {
-          that.transfomer.nodes([shape[0]]);
+          that.currentShape = shape[0];
+          that.transfomer.nodes([that.currentShape]);
         }
       }
     });
   }
 
+  drawItem(item) {
+    const rect = this.drawRect(item);
+    const image = this.drawImage(item);
+    const qr = this.drawQRCode(item);
+    const text = this.drawText(item);
+    const group = new Konva.Group({
+      id: item.id.toString(),
+      x: item.top,
+      y: item.left,
+      width: item.width,
+      height: item.height,
+      rotation: item.rotation,
+      name: CommonConsts.ShapeName,
+      draggable: item.draggable,
+    });
+
+    if (rect) { group.add(rect); }
+    if (image) { group.add(image); }
+    if (qr) { group.add(qr); }
+    if (text) { group.add(text); }
+
+    this.layer.add(group);
+    this.bindTransformEvent(group);
+  }
+
   drawRect(item) {
-    const that = this;
     if (item) {
       const rect =  new Konva.Rect({
-        x: 0,
-        y: 0,
         width: item.width,
         height: item.height,
-        fill: item.backgroundColor,
         stroke: item.strokeColor,
         strokeWidth: item.strokeSize,
-        cornerRadius: item.cornerRadius
+        cornerRadius: item.cornerRadius,
+        opacity: item.opacity
       });
-
-      const group = new Konva.Group({
-        id: item.id.toString(),
-        x: item.top,
-        y: item.left,
-        draggable: true,
-        name: 'shape',
-        scaleX: item.scaleX,
-        scaleY: item.scaleY
-      });
-
-      group.add(rect);
       
-      if (item.textImage) {
-        const textImage = new Image();
-        textImage.onload = () => {
-          if (textImage.width > 0 && textImage.height > 0) {
-            const picture = new Konva.Image({
-              x: 0,
-              y: 0,
-              image: textImage,
-              width: item.width              
-            });
-            group.add(picture);
-          }
-        };
-        textImage.src = item.textImage;            
-      } else if (item.qrCode) {
-        const div = document.createElement('div');
-        new QRCode(div, {
-          text: item.qrCode,
-          width: item.width,
-          height: item.height,
-          colorDark : item.strokeColor,
-          colorLight : item.backgroundColor,
-          correctLevel : QRCode.CorrectLevel.H
-        });        
-        const img = div.getElementsByTagName('img')[0];
-        const picture = new Konva.Image({
-          x: 0,
-          y: 0,
-          image: img,
-          width: item.width              
-        });
-        group.add(picture);
+      if (!item.text) {
+        rect.fill(item.backgroundColor);
       }
 
-      that.layer.add(group);
-
-      if (item.backgroundImage) {
-        const backgroundImage = new Image();
-        backgroundImage.onload = () => {
-          if (backgroundImage.width > 0 && backgroundImage.height > 0) {
-            let x = item.width / backgroundImage.width;
-            let y = item.height / backgroundImage.height;
-
-            rect.fill(null);
-            rect.fillPatternImage(backgroundImage);
-            rect.fillPatternScale({x, y});
-            that.layer.draw();
-          }
-        };
-        backgroundImage.src = item.backgroundImage;            
-      }
-
-      group.on('dragend', () => {
-        const nodes = that.transfomer.nodes();
-        if (nodes.length > 0) {
-          for (let node of nodes) {
-            that.store.dispatch(updateShapeAction({payload: {
-              id: parseInt(node.id()),
-              top: node.x(),
-              left: node.y()
-            }}));
-          }
-        } else {
-          that.store.dispatch(updateShapeAction({payload: {
-            id: parseInt(group.id()),
-            top: group.x(),
-            left: group.y()
-          }}));
-        }
-      });
-
-      group.on('transformend', () => {
-        const nodes = that.transfomer.nodes();
-        if (nodes.length > 0) {
-          for (let node of nodes) {
-            that.store.dispatch(updateShapeAction({payload: {
-              id: parseInt(node.id()),
-              top: node.x(),
-              left: node.y(),
-              scaleX: node.scaleX(),
-              scaleY: node.scaleY()
-            }}));
-          }
-        } else {
-          that.store.dispatch(updateShapeAction({payload: {
-            id: parseInt(group.id()),
-            top: group.x(),
-            left: group.y(),
-            scaleX: group.scaleX(),
-            scaleY: group.scaleY()
-          }}));
-        }        
-      });
+      return rect;
     }
   }
 
-  drawClick(data) {
-    const that = this;
-    if (data) {
-      that.transfomer.nodes([]);      
-       if (data.shapeType === ShapeEnums.Text) {
-        const text = new Konva.Text({
-          x: data.x,
-          y: data.y,
-          text: data.text,
-          fontSize: data.fontSize,
-          fontFamily: data.fontFamily,
-          fill: data.fill,
-          name: data.name,
-          width: data.width,
-          padding: data.padding,
-          align: data.align,
-          draggable: data.draggable
-        });
-        that.layer.add(text);
-        that.transfomer.nodes([text]);
-      } else if (data.shapeType === ShapeEnums.QRCode) {
-        const div = document.createElement('div');
-        new QRCode(div, {
-          text: data.text,
-          width: data.width * 2,
-          height: data.height * 2,
-          colorDark : data.colorDark,
-          colorLight : data.colorLight,
-          correctLevel : QRCode.CorrectLevel.H
-        });
-        
-        const img = div.getElementsByTagName('img')[0];
-        const picture = new Konva.Image({
-          x: data.x,
-          y: data.y,
-          image: img,
-          name: 'shape',
-          width: data.width,
-          height: data.height,
-          customWidth: data.width,
-          customHeight: data.height,
-          draggable: data.draggable,
-          text: data.text
-        });
-        that.layer.add(picture);
-        that.transfomer.nodes([picture]);
-      } 
+  drawText(data) {
+    if (data && data.text) {
+      var text = new Konva.Text({
+        text: data.text,
+        width: data.width,
+        height: data.height,
+        fontSize: data.fontSize,
+        fontFamily: data.fontFamily,
+        fontStyle: data.fontStyle,
+        align: data.align,
+        verticalAlign: data.verticalAlign,
+        fill: data.textColor,
+        opacity: data.opacity,
+        padding: data.textPadding,
+        lineHeight: data.textLineHeight
+      });
+      return text;
     }
+  }
+
+  drawImage(data) {
+    if (data && data.backgroundImage) {
+      const rect = new Konva.Rect({
+        width: data.width,
+        height: data.height,
+        opacity: data.opacity
+      });
+
+      const img = new Image();
+      img.onload = () => {
+        if (img.width > 0 && img.height > 0) {
+          rect.fill(null);
+          rect.fillPatternImage(img);
+          let x = data.width / img.width;
+          let y = data.height / img.height;
+          rect.fillPatternScale({ x: x, y: y });
+        }
+      };
+      img.src = data.backgroundImage;
+      return rect;         
+    }
+  }
+
+  drawQRCode(data) {
+    if (data && data.qrCode) {
+      const div = document.createElement('div');
+      new QRCode(div, {
+        text: data.qrCode,
+        width: data.width,
+        height: data.height,
+        colorDark : data.strokeColor,
+        colorLight : data.backgroundColor,
+        correctLevel : QRCode.CorrectLevel.H
+      });        
+      const img = div.getElementsByTagName('img')[0];
+      const picture = new Konva.Image({
+        image: img,
+        width: data.width,
+        height: data.height,
+        opacity: data.opacity
+      });
+      
+      return picture;
+    }
+  }
+
+  bindTransformEvent(shape) {
+    const that = this;
+    shape.on('dragend', (evt) => {
+      const nodes = that.transfomer.nodes();
+      if (nodes.length > 1) {
+        for(let item of nodes) {
+          that.store.dispatch(updateShapeAction({payload: {
+            id: parseInt(item.id()),
+            top: item.x(),
+            left: item.y()
+          }}));
+        }
+      } else {
+        const node = evt.currentTarget;
+        that.store.dispatch(updateShapeAction({payload: {
+          id: parseInt(node.id()),
+          top: node.x(),
+          left: node.y()
+        }}));
+      }
+    });
+
+    shape.on('transformend', (evt) => {
+      const nodes = that.transfomer.nodes();
+      if (nodes.length > 1) {
+        for (let item of nodes) {
+          that.store.dispatch(updateShapeAction({payload: {
+            id: parseInt(item.id()),
+            top: item.x(),
+            left: item.y(),
+            width: item.width() * item.scaleX(),
+            height: item.height() * item.scaleY(),
+            rotation: item.rotation()
+          }}));
+        }
+      } else {
+        const node = evt.currentTarget;
+        that.store.dispatch(updateShapeAction({payload: {
+          id: parseInt(node.id()),
+          top: node.x(),
+          left: node.y(),
+          width: node.width() * node.scaleX(),
+          height: node.height() * node.scaleY(),
+          rotation: node.rotation()
+        }}));
+      }
+    });
+
+    shape.on('dblclick dbltap', () => {
+      let ref = this.modal.open(ConfigComponent, { size: 'lg', backdrop: 'static' });
+      ref.componentInstance.data = {
+        id: shape.id()
+      };
+    });
+
   }
 
   selectShape(id) {
     this.store.dispatch(selectShapeAction({ id: id }));
   }
 
-  bindHighlightEvents() {
-    this.layer.on('mouseover', function (evt) {
-      var shape = evt.target as any;
-      document.body.style.cursor = 'pointer';
-      shape.strokeEnabled(true);
-    });
-    this.layer.on('mouseout', function (evt) {
-      var shape = evt.target as any;
-      document.body.style.cursor = 'default';
-      shape.strokeEnabled(false);
-    });
-  }
-
-  load(): void {    
-
-    var background = new Konva.Rect({
-      x: 0,
-      y: 0,
-      width: this.stage.width(),
-      height: this.stage.height(),
-      fillLinearGradientStartPoint: { x: 0, y: 0 },
-      fillLinearGradientEndPoint: { x: this.stage.width(), y: this.stage.height() },
-      fillLinearGradientColorStops: [
-        0,
-        'yellow',
-        0.5,
-        'blue',
-        0.6,
-        'rgba(0, 0, 0, 0)',
-      ],
-      listening: false,
-    });
-    this.layer.add(background);
-  }
-  
   // were can we snap our objects?
   getLineGuideStops(skipShape) {
     // we can snap to stage borders and the center of the stage
@@ -323,7 +295,7 @@ export class BoardComponent implements OnInit {
     var horizontal = [0, this.stage.height() / 2, this.stage.height()];
 
     // and we snap over edges and center of each object on the canvas
-    this.stage.find('.shape').forEach((guideItem) => {
+    this.stage.find(`.${CommonConsts.ShapeName}`).forEach((guideItem) => {
       if (guideItem === skipShape) {
         return;
       }
@@ -567,6 +539,7 @@ export class BoardComponent implements OnInit {
 
     let x1, y1, x2, y2;
     that.stage.on('mousedown touchstart', (e) => {
+
       // do nothing if we mousedown on any shape
       if (e.target !== that.stage) {
         return;
@@ -608,11 +581,13 @@ export class BoardComponent implements OnInit {
         selectionRectangle.visible(false);
       });
 
-      var shapes = that.stage.find('.shape');
+      var shapes = that.stage.find(`.${CommonConsts.ShapeName}`);
       var box = selectionRectangle.getClientRect();
-      var selected = shapes.filter((shape) =>
-        Konva.Util.haveIntersection(box, shape.getClientRect())
-      );
+      var selected = shapes.filter((shape) => {
+        if (shape.draggable()) {
+          Konva.Util.haveIntersection(box, shape.getClientRect())
+        }        
+      });
       that.transfomer.nodes(selected);
 
       if (selected.length === 0) {
@@ -627,6 +602,10 @@ export class BoardComponent implements OnInit {
         return;
       }
 
+      if (!e.target.parent){
+        return;
+      }      
+
       // if click on empty area - remove all selections
       if (e.target.parent === that.stage) {
         that.transfomer.nodes([]);        
@@ -634,7 +613,7 @@ export class BoardComponent implements OnInit {
       }
 
       // do nothing if clicked NOT on our rectangles
-      if (!e.target.parent.hasName('shape')) {
+      if (!e.target.parent.hasName(CommonConsts.ShapeName)) {
         return;
       }
       // do we pressed shift or ctrl?
@@ -694,18 +673,15 @@ export class BoardComponent implements OnInit {
 
     const container = that.stage.container();
     container.tabIndex = 1;
-    container.focus();
     container.addEventListener('keydown', function (e) {
       
       if (e.keyCode === 46) {
-        let isRemove = confirm(MessageConsts.CONFORM_DELETE);
-        if (isRemove) {
-          for(let item of that.transfomer.nodes()) {
-            if (item) {
-              item.destroy();
-            }
+        if (that.currentShape) {
+          let isRemove = confirm(MessageConsts.CONFORM_DELETE);
+          if (isRemove) {
+            const id = that.currentShape.id();
+            that.store.dispatch(removeShapeAction({ id: parseInt(id) }));
           }
-          that.transfomer.nodes([]);
         }
       }
       
@@ -713,26 +689,28 @@ export class BoardComponent implements OnInit {
     });
   }
 
-  export(event) {
-    let that = this;
-    if (event.type === 'pdf') {
-      var pdf = new jsPDF('l', 'px', [that.stage.width(), that.stage.height()]);
-        // then put image on top of texts (so texts are not visible)
-        const dataURL = that.stage.toDataURL({ pixelRatio: 3 });
-        pdf.addImage(
-          dataURL,
-          0,
-          0,
-          that.stage.width(),
-          that.stage.height()
-        );
-    
-        pdf.save(event.fileName);
-    } else if (event.type === 'image') {
+  export(item) {
+    const that = this;
+    let fileName = '';
+    if (item.type === 'pdf') {
+      const pdf = new jsPDF('l', 'px', [that.stage.width(), that.stage.height()]);
+      // then put image on top of texts (so texts are not visible)
+      const dataURL = that.stage.toDataURL({ pixelRatio: 3 });
+      pdf.addImage(
+        dataURL,
+        0,
+        0,
+        that.stage.width(),
+        that.stage.height()
+      );
+      fileName = `${item.name}.pdf`;
+      pdf.save(fileName);
+    } else if (item.type === 'image') {
+      fileName = `${item.name}.png`;
       const dataURL = that.stage.toDataURL({ pixelRatio: 1 });
-      that.downloadURI(dataURL, event.fileName);
-    } else if (event.type === 'template') {
-      alert(event.fileName);
+      that.downloadURI(dataURL, fileName);
+    } else if (item.type === 'template') {
+      alert(item.name);
     }
   }
 
@@ -745,88 +723,14 @@ export class BoardComponent implements OnInit {
     document.body.removeChild(link);
   }
 
-  drawImage() {
-    let that = this;
-    this.store.select(getDrawImageSelector).subscribe(data => {
+  bindExportEvent() {
+    const that = this;
+    that.store.select(getExportSelector).subscribe(data => {
       if (data) {
-        const img = new Image();
-        img.src = data.data;
-        let size = this.calculateAspectRatioFit(data.width, data.height, 350, 350);
-        const picture = new Konva.Image({
-          id: data.id,
-          x: 50,
-          y: 50,
-          image: img,
-          name: 'shape',
-          width: size.width,
-          height: size.height,
-          customWidth: size.width,
-          customHeight: size.height,
-          draggable: true
-        });
-        that.layer.add(picture);
-        that.transfomer.nodes([picture]);
-
-        that.store.dispatch(drawImageAction({payload: null}));
-      };
-    });
-  }
-
-  calculateAspectRatioFit(srcWidth, srcHeight, maxWidth, maxHeight) {
-    var ratio = Math.min(maxWidth / srcWidth, maxHeight / srcHeight);
-    return { width: srcWidth*ratio, height: srcHeight*ratio };
-  }
-
-  bindImages(item) {
-    if (item) {
-      const images = item.find('Image');
-      for(const img of images) {
-        const text = img.attrs.text;
-        if (text) {
-          const div = document.createElement('div');
-          new QRCode(div, {
-            text: text,
-            width: img.attrs.customWidth * 2,
-            height: img.attrs.customHeight * 2,
-            colorDark : "#000000",
-            colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.H
-          });        
-          
-          let qrImage = div.getElementsByTagName('img')[0];
-          img.image(qrImage);
-          qrImage.remove();
-          div.remove();
-        } else {          
-          const picture = this.images.find(x => x.id === img.attrs.id);
-          const currentImage = new Image();
-          currentImage.src = picture.data;
-          img.image(currentImage);
-        }
-      }
-    }
-  }
-
-  loadImages() {
-    this.store.dispatch(loadImageAction());
-    this.store.select(getImagesSelector).subscribe(data => {
-      if (data) {
-        this.images = data;
+        that.export(data);
+        that.store.dispatch(exportDesignAction({payload: null}));
       }
     });
-  }
-
-  changePosition(direction) {
-    const nodes = this.transfomer.nodes();
-    if (nodes && nodes.length > 0) {
-      for (const node of nodes) {
-        if (direction === 'up') {
-          node.moveUp();
-        } else if (direction === 'down') {
-          node.moveDown();
-        }   
-      }
-    }
   }
 }
 
