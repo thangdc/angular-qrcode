@@ -7,8 +7,8 @@ import html2canvas from 'html2canvas';
 import QRCode from 'qrcodejs2';
 import Konva from 'konva';
 import { MessageConsts } from 'src/app/modules/core';
-import { ShapeModel } from 'src/app/shared/models';
-import { addShapeAction, getShapeSelector, updateShapeAction } from 'src/app/stores';
+import { ShapeModel, TemplateModel } from 'src/app/shared/models';
+import { addShapeAction, getDefaultTemplateSelector, getShapeSelector, updateShapeAction } from 'src/app/stores';
 
 @Component({
   selector: 'app-config',
@@ -33,6 +33,8 @@ export class ConfigComponent implements OnInit {
   textPicture: any;
   textControl: any;
 
+  template: TemplateModel;
+
   constructor(public activeModal: NgbActiveModal,
     private store: Store) { }
 
@@ -44,6 +46,7 @@ export class ConfigComponent implements OnInit {
     const model = new ShapeModel();
     this.configForm = new FormGroup({
       id: new FormControl(model.id),
+      name: new FormControl(model.name),
       left: new FormControl(model.left, [Validators.required]),
       top: new FormControl(model.top, [Validators.required]),
       width: new FormControl(model.width, [Validators.required]),
@@ -66,13 +69,20 @@ export class ConfigComponent implements OnInit {
       textColor: new FormControl(model.textColor),
       textPadding: new FormControl(model.textPadding),
       textLineHeight: new FormControl(model.textLineHeight),
-      index: new FormControl(model.index)
+      index: new FormControl(model.index),
+      isShow: new FormControl(model.isShow)
     });
 
     this.formChange();
   }
 
   bindData() {
+
+    const that = this;
+    that.store.select(getDefaultTemplateSelector).subscribe(x => {
+      that.template = x;
+    });
+
     this.initForm();
     this.initStage();
     this.drawShape();
@@ -82,11 +92,7 @@ export class ConfigComponent implements OnInit {
       this.configForm.patchValue({id: new Date().getTime(), opacity: 100});
     } else {
       this.dialogTitle = MessageConsts.EDIT_TITLE;
-      this.store.select(getShapeSelector).subscribe(data => {                
-        if (data) {
-          this.updateForm(data);
-        }
-      });
+      this.updateForm(this.data.shape);
     }
   }
 
@@ -94,6 +100,7 @@ export class ConfigComponent implements OnInit {
     if (data) {
       this.configForm.patchValue({
         id: data.id,
+        name: data.name,
         left: data.left,
         top: data.top,
         width: data.width,
@@ -116,7 +123,8 @@ export class ConfigComponent implements OnInit {
         textColor: data.textColor,
         textPadding: data.textPadding,
         textLineHeight: data.textLineHeight,
-        index: data.index
+        index: data.index,
+        isShow: data.isShow
       });
     }
   }
@@ -233,9 +241,9 @@ export class ConfigComponent implements OnInit {
   saveClick() {
     if (this.configForm.valid) {
       if (this.dialogTitle === MessageConsts.ADD_TITLE) { 
-        this.store.dispatch(addShapeAction({ payload: this.configForm.value }));
+        this.store.dispatch(addShapeAction({ templateId: this.template.id, payload: this.configForm.value }));
       } else {
-        this.store.dispatch(updateShapeAction({ payload: this.configForm.value }));
+        this.store.dispatch(updateShapeAction({ templateId: this.template.id, payload: this.configForm.value }));
       }
       this.activeModal.close();
     }

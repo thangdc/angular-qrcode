@@ -1,7 +1,8 @@
-import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { MessageConsts } from 'src/app/modules/core';
-import { addImageAction, drawImageAction, getImagesSelector, loadImageAction, removeImageAction } from 'src/app/stores';
+import { TemplateModel } from 'src/app/shared/models';
+import { addImageAction, getDefaultTemplateSelector, getImagesSelector, loadImageAction, removeImageAction } from 'src/app/stores';
 
 @Component({
   selector: 'app-upload',
@@ -16,14 +17,22 @@ export class UploadComponent implements OnInit {
   
   public files: any[] = [];
   public images: any[];
+  
+  template: TemplateModel;
 
   constructor(private store: Store) { }
 
   ngOnInit(): void {
-    this.store.dispatch(loadImageAction());
-    this.store.select(getImagesSelector).subscribe(data => {
-      if (data) {
-        this.images = data;
+    const that = this;
+    that.store.select(getDefaultTemplateSelector).subscribe(data => {
+      that.template = data;
+      if (data && data.id > 0) {
+        this.store.dispatch(loadImageAction({ templateId: data.id }));
+        this.store.select(getImagesSelector).subscribe(data => {
+          if (data) {
+            this.images = data;
+          }
+        });
       }
     });
   }
@@ -48,7 +57,7 @@ export class UploadComponent implements OnInit {
               width: image.width,
               height: image.height
             }
-            this.store.dispatch(addImageAction({ payload: item }));  
+            this.store.dispatch(addImageAction({ templateId: this.template.id, payload: item }));  
           };          
         }
       }
@@ -64,7 +73,7 @@ export class UploadComponent implements OnInit {
   removeImage(item) {
     let isRemove = confirm(MessageConsts.CONFORM_DELETE);
     if (isRemove) {
-      this.store.dispatch(removeImageAction({ payload: item }));
+      this.store.dispatch(removeImageAction({ templateId: this.template.id, payload: item }));
     }
   }
 }

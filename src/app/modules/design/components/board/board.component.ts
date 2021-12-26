@@ -1,19 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Store } from '@ngrx/store';
-import jsPDF, { ShadingPattern } from 'jspdf';
+import jsPDF from 'jspdf';
 import Konva from 'konva';
 import QRCode from 'qrcodejs2';
 import { CommonConsts, MessageConsts } from 'src/app/modules/core/constants';
-import { TemplateModel } from 'src/app/shared/models';
+import { ShapeModel, TemplateModel } from 'src/app/shared/models';
 
 import { 
   exportDesignAction,
+  getDefaultTemplateSelector,
   getExportSelector,
   getShapesAction, 
   getShapeSelector, 
   getShapesSelector, 
-  getTemplateSelector, 
   removeShapeAction, 
   selectShapeAction,
   updateShapeAction,
@@ -33,12 +33,16 @@ export class BoardComponent implements OnInit {
   shapes: any = [];
   images: any = [];
 
+  elements: ShapeModel[] = [];
+
   currentShape: any;
 
   template: TemplateModel = new TemplateModel();
 
   container: string = 'container';
   GUIDELINE_OFFSET: number = 5;
+
+  isFirstExport: boolean = true;
 
   constructor(private store: Store,
     private modal: NgbModal) {
@@ -47,16 +51,11 @@ export class BoardComponent implements OnInit {
 
   ngOnInit(): void {
     this.bindTemplate();
-    this.getShapes();
-    this.bindSelectEvents();
-    this.bindSnapGridEvent();
-    this.bindKeyBoardEvent();
-    this.bindExportEvent();
   }
 
   bindTemplate() {
     const that = this;
-    that.store.select(getTemplateSelector).subscribe(data => {
+    that.store.select(getDefaultTemplateSelector).subscribe(data => {
       that.template = new TemplateModel();
       if (data) {
         that.template = data;
@@ -67,24 +66,26 @@ export class BoardComponent implements OnInit {
 
   initStage(): void {
     const data = this.template;
-    if (!this.stage) {
-      this.stage = new Konva.Stage({
-        container: this.container,
-        width: data.width,
-        height: data.height
-      });
-      this.layer = new Konva.Layer();
-      this.stage.add(this.layer);
-    } else {
-      this.stage.width(data.width);
-      this.stage.height(data.height);
-    }
+    this.stage = new Konva.Stage({
+      container: this.container,
+      width: data.width,
+      height: data.height
+    });
+    this.layer = new Konva.Layer();
+    this.stage.add(this.layer);
+
+    this.getShapes();
+    this.bindSelectEvents();
+    this.bindSnapGridEvent();
+    this.bindKeyBoardEvent();
+    this.bindExportEvent();
   }
 
   getShapes() {
     const that = this;
-    that.store.dispatch(getShapesAction());
+    that.store.dispatch(getShapesAction({ templateId: this.template.id }));
     that.store.select(getShapesSelector).subscribe(data => {
+      that.elements = data;
       if (that.layer) {
         that.layer.destroyChildren();
         that.stage.destroyChildren();
@@ -93,7 +94,9 @@ export class BoardComponent implements OnInit {
 
       if (data && data.length > 0) {
         for(let item of data) {
-          that.drawItem(item);
+          if (item.isShow) {
+            that.drawItem(item);
+          }
         }
       }
       that.layer.draw();
@@ -115,6 +118,29 @@ export class BoardComponent implements OnInit {
         }
       }
     });
+  }
+
+  editShape(item: ShapeModel) {
+    let ref = this.modal.open(ConfigComponent, { size: 'lg', backdrop: 'static' });
+    ref.componentInstance.data = { id: item.id, shape: item };
+  }
+
+  updateShape(evt, item: ShapeModel) {
+    let shape = { ...item, isShow: evt.target.checked };
+    this.store.dispatch(updateShapeAction({ templateId: this.template.id, payload: shape }));
+  }
+
+  removeShape(id: number) {
+    const yes = confirm('Bạn có muốn xóa thành phần này hay không?');
+    if (yes) {
+      this.store.dispatch(removeShapeAction({ templateId: this.template.id, id }));
+    }
+  }
+
+  showToken(name: string){
+    let result = `[${name}]`;
+
+    return result;
   }
 
   drawItem(item) {
@@ -153,7 +179,7 @@ export class BoardComponent implements OnInit {
         opacity: item.opacity
       });
       
-      if (!item.text) {
+      if (item.text) {
         rect.fill(item.backgroundColor);
       }
 
@@ -233,7 +259,7 @@ export class BoardComponent implements OnInit {
       const nodes = that.transfomer.nodes();
       if (nodes.length > 1) {
         for(let item of nodes) {
-          that.store.dispatch(updateShapeAction({payload: {
+          that.store.dispatch(updateShapeAction({ templateId: this.template.id, payload: {
             id: parseInt(item.id()),
             top: item.x(),
             left: item.y()
@@ -241,7 +267,7 @@ export class BoardComponent implements OnInit {
         }
       } else {
         const node = evt.currentTarget;
-        that.store.dispatch(updateShapeAction({payload: {
+        that.store.dispatch(updateShapeAction({ templateId: this.template.id, payload: {
           id: parseInt(node.id()),
           top: node.x(),
           left: node.y()
@@ -253,7 +279,7 @@ export class BoardComponent implements OnInit {
       const nodes = that.transfomer.nodes();
       if (nodes.length > 1) {
         for (let item of nodes) {
-          that.store.dispatch(updateShapeAction({payload: {
+          that.store.dispatch(updateShapeAction({ templateId: this.template.id, payload: {
             id: parseInt(item.id()),
             top: item.x(),
             left: item.y(),
@@ -264,7 +290,7 @@ export class BoardComponent implements OnInit {
         }
       } else {
         const node = evt.currentTarget;
-        that.store.dispatch(updateShapeAction({payload: {
+        that.store.dispatch(updateShapeAction({ templateId: this.template.id, payload: {
           id: parseInt(node.id()),
           top: node.x(),
           left: node.y(),
@@ -680,7 +706,7 @@ export class BoardComponent implements OnInit {
           let isRemove = confirm(MessageConsts.CONFORM_DELETE);
           if (isRemove) {
             const id = that.currentShape.id();
-            that.store.dispatch(removeShapeAction({ id: parseInt(id) }));
+            that.store.dispatch(removeShapeAction({ templateId: that.template.id,  id: parseInt(id) }));
           }
         }
       }
@@ -712,6 +738,7 @@ export class BoardComponent implements OnInit {
     } else if (item.type === 'template') {
       alert(item.name);
     }
+    that.isFirstExport = false;
   }
 
   downloadURI(uri, name) {
@@ -726,10 +753,10 @@ export class BoardComponent implements OnInit {
   bindExportEvent() {
     const that = this;
     that.store.select(getExportSelector).subscribe(data => {
-      if (data) {
+      if (data && this.isFirstExport) {
         that.export(data);
-        that.store.dispatch(exportDesignAction({payload: null}));
       }
+      that.store.dispatch(exportDesignAction({payload: null}));
     });
   }
 }

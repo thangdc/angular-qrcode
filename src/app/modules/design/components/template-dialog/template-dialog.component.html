@@ -1,0 +1,32 @@
+<form [formGroup]="templateForm" (ngSubmit)="onSubmit()">
+    <div class="modal-header">
+        <h4 class="modal-title">Mẫu</h4>
+        <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
+    </div>
+    <div class="modal-body">        
+        <input type="hidden" formControlName="id" />
+        <input type="hidden" formControlName="isDefault" />
+        <div>
+            <label>Tên mẫu</label>
+            <input type="text" formControlName="name" class="form-control" />
+        </div>
+        <div>
+            <label>Mô tả</label>
+            <textarea class="form-control" formControlName="description"></textarea>
+        </div>
+        <div class="row">
+            <div class="col">
+                <label>Chiều rộng (pixel)</label>
+                <input type="number" formControlName="width" class="form-control" />
+            </div>
+            <div class="col">
+                <label>Chiều cao (pixel)</label>
+                <input type="number" formControlName="height" class="form-control" />
+            </div>
+        </div>        
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-sm btn-secondary" type="button" (click)="activeModal.dismiss()"><span class="fas fa-ban"></span> Hủy</button>
+        <button class="btn btn-sm btn-primary me-1" type="submit" [disabled]="!templateForm.valid"><span class="fas fa-file"></span> Lưu</button>
+    </div>
+</form>

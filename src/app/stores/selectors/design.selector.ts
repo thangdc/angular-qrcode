@@ -41,3 +41,13 @@ export const getExportSelector = createSelector(
   getDesignState,
   fromDesign.getExportReducer
 )
+
+export const getTemplatesSelector = createSelector(
+  getDesignState,
+  fromDesign.getTemplatesReducer
+)
+
+export const getDefaultTemplateSelector = createSelector(
+  getDesignState,
+  fromDesign.getDefaultTemplateReducer
+)

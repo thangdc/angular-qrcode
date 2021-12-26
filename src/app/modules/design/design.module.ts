@@ -7,12 +7,13 @@ import { ToolbarComponent } from './components/toolbar/toolbar.component';
 import { SidePanelComponent } from './components/side-panel/side-panel.component';
 import { TemplateComponent } from './components/template/template.component';
 import { UploadComponent } from './components/upload/upload.component';
-import { ResizeComponent } from './components/resize/resize.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ConfigComponent } from './components/config/config.component';
 import { AngularEditorModule } from '@kolkov/angular-editor';
 import { CoreModule } from '../core/core.module';
 import { ExportComponent } from './components/export/export.component';
+import { DataComponent } from './components/data/data.component';
+import { TemplateDialogComponent } from './components/template-dialog/template-dialog.component';
 
 @NgModule({
   declarations: [
@@ -22,9 +23,10 @@ import { ExportComponent } from './components/export/export.component';
     SidePanelComponent,
     TemplateComponent,
     UploadComponent,
-    ResizeComponent,
     ConfigComponent,
-    ExportComponent
+    ExportComponent,
+    DataComponent,
+    TemplateDialogComponent
   ],
   imports: [
     CommonModule,

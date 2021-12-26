@@ -1,0 +1,25 @@
+<div>    
+    <form class="mx-1 my-1">
+        <div class="input-group">
+            <input type="text" class="form-control" placeholder="Từ khóa" (input)="onSearchChange($event.target.value)" />
+            <button class="btn btn-sm btn-outline-primary" type="button" (click)="addNew()">Thêm mẫu</button>
+        </div>
+    </form>
+    <div class="panel">
+        <div class="card mx-1 my-1" *ngFor="let item of items">
+            <a class="link" (click)="markAsDefault(item.id)">
+                <div class="card-body" [class]="item.isDefault ? 'bg-warning' : ''">
+                    <div class="h6">{{ item.name }}</div> 
+                    <div>{{ item.description }}</div>                
+                </div>            
+            </a>
+            <div class="controls">
+                <a class="me-1" (click)="updateTemplate(item.id)"><span class="fas fa-edit"></span></a>
+                <a class="me-1" (click)="deleteTemplate(item.id)"><span class="fas fa-trash"></span></a>
+            </div>
+        </div>
+        <p class="alert alert-warning mx-1" *ngIf="items.length === 0">
+            Không có dữ liệu
+        </p>
+    </div>    
+</div>

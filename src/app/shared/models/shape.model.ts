@@ -1,5 +1,6 @@
 export class ShapeModel {
     id: number;
+    name: string;
     top: number;
     left: number;
     width: number;
@@ -26,9 +27,11 @@ export class ShapeModel {
     textPadding: number;
     textLineHeight: number;
     index: number;
+    isShow: boolean;
 
     constructor() {
         this.id = 0;
+        this.name = '';
         this.top = 10;
         this.left = 10;
         this.width = 200;
@@ -55,5 +58,6 @@ export class ShapeModel {
         this.textPadding = 0;
         this.textLineHeight = 1;
         this.index = 1;
+        this.isShow = true;
     }
 }

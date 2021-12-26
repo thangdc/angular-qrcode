@@ -1,0 +1,22 @@
+.panel {
+    overflow: auto;
+    height: calc(100vh - 96px);
+}
+
+a {
+    cursor: pointer;
+    text-decoration: none;
+}
+
+a.link:hover {
+    background-color: #cdcdcd;
+}
+
+.card {
+    position: relative;
+}
+
+.controls {
+    position: absolute;
+    right: 0;
+}

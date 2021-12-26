@@ -1,9 +1,8 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Store } from '@ngrx/store';
-import { ShapeModel } from 'src/app/shared/models';
-import { removeShapeAction } from 'src/app/stores';
-import { getShapeSelector } from 'src/app/stores/selectors';
+import { TemplateModel } from 'src/app/shared/models';
+import { getDefaultTemplateSelector, getShapeSelector } from 'src/app/stores/selectors';
 import { ConfigComponent } from '../config/config.component';
 import { ExportComponent } from '../export/export.component';
 
@@ -17,40 +16,33 @@ export class ToolbarComponent implements OnInit {
   @Output() export: EventEmitter<any> = new EventEmitter();
   @Output() draw: EventEmitter<any> = new EventEmitter();
 
-  elements: any[];
   data: any;
-  isSelected: boolean = false;
-  currentShape: ShapeModel;
+  template: TemplateModel;
 
   constructor(
     private store: Store,
-    private modal: NgbModal
-    ) { }
+    private modal: NgbModal) { }
   
   ngOnInit(): void {
-    this.selectedShape();
+    this.getTemplate();
   }
 
-  openDialog(id) {
-    let ref = this.modal.open(ConfigComponent, { size: 'lg', backdrop: 'static' });
-    ref.componentInstance.data = {
-      id: id
-    };
-  }
-
-  selectedShape() {
-    const that = this;
-    that.store.select(getShapeSelector).subscribe(data => {      
-      that.isSelected = data !== undefined && data !== null;
-      this.currentShape = data;
-    });
-  }
-
-  removeShape() {
-    const that = this;
-    if (that.currentShape) {
-      that.store.dispatch(removeShapeAction({id: that.currentShape.id}));
+  openDialog(id: number) {
+    if (this.template && this.template.id > 0) {
+      let ref = this.modal.open(ConfigComponent, { size: 'lg', backdrop: 'static' });
+      ref.componentInstance.data = {
+        id: id
+      };
+    } else {
+      alert('Vui lòng chọn mẫu cần thiết kế.');
     }
+  }
+
+  getTemplate() {
+    const that = this;
+    that.store.select(getDefaultTemplateSelector).subscribe(data => {
+      that.template = data;
+    });    
   }
 
   exportData() {

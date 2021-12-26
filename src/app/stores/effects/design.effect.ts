@@ -12,7 +12,7 @@ export class DesignEffects {
     
     loadData$ = createEffect(() => this.actions$.pipe(
         ofType(DesignAction.loadDataAction),
-        switchMap(() => this.designService.loadData().pipe(
+        switchMap(x => this.designService.loadData(x.templateId).pipe(
             map(data => {
                 return DesignAction.loadDataSuccess({ payload: data });
             })
@@ -21,7 +21,7 @@ export class DesignEffects {
         
     saveData$ = createEffect(() => this.actions$.pipe(
         ofType(DesignAction.saveDataAction),
-        switchMap(action => this.designService.saveData(action.payload).pipe(
+        switchMap(x => this.designService.saveData(x.templateId, x.payload).pipe(
           map(data => {
                 return DesignAction.saveDataSuccess(data);
           })
@@ -30,7 +30,7 @@ export class DesignEffects {
 
     addImage$ = createEffect(() => this.actions$.pipe(
         ofType(DesignAction.addImageAction),
-        switchMap(action => this.designService.addImage(action.payload).pipe(
+        switchMap(x => this.designService.addImage(x.templateId, x.payload).pipe(
             map(data => {
                 return DesignAction.addImageToStoreAction(data);
             })
@@ -39,7 +39,7 @@ export class DesignEffects {
 
     loadImage$ = createEffect(() => this.actions$.pipe(
         ofType(DesignAction.loadImageAction),
-        switchMap(() => this.designService.loadImages().pipe(
+        switchMap(x => this.designService.loadImages(x.templateId).pipe(
             map(data => {
                 return DesignAction.saveImageToStoreAction({ payload: data});
             })
@@ -48,7 +48,7 @@ export class DesignEffects {
 
     removeImage$ = createEffect(() => this.actions$.pipe(
         ofType(DesignAction.removeImageAction),
-        switchMap(item => this.designService.removeImage(item.payload).pipe(
+        switchMap(x => this.designService.removeImage(x.templateId, x.payload).pipe(
             map(data => {
                 return DesignAction.removeImageInStoreAction({ payload: data });
             })
@@ -57,7 +57,7 @@ export class DesignEffects {
 
     addShape$ = createEffect(() => this.actions$.pipe(
         ofType(DesignAction.addShapeAction),
-        switchMap(item => this.designService.addShape(item.payload).pipe(
+        switchMap(x => this.designService.addShape(x.templateId, x.payload).pipe(
             map(data => {
                 return DesignAction.saveShapeToStoreAction({payload: data});
             })
@@ -66,7 +66,7 @@ export class DesignEffects {
 
     getShape$ = createEffect(() => this.actions$.pipe(
         ofType(DesignAction.getShapesAction),
-        switchMap(() => this.designService.getShapes().pipe(
+        switchMap(x => this.designService.getShapes(x.templateId).pipe(
             map(data => {
                 return DesignAction.saveShapesToStoreAction({payload: data});
             })
@@ -75,7 +75,7 @@ export class DesignEffects {
 
     updateShape$ = createEffect(() => this.actions$.pipe(
         ofType(DesignAction.updateShapeAction),
-        switchMap(item => this.designService.updateShape(item.payload).pipe(
+        switchMap(x => this.designService.updateShape(x.templateId, x.payload).pipe(
             map(data => {
                 return DesignAction.updateShapeToStoreAction({payload: data});
             })
@@ -84,9 +84,54 @@ export class DesignEffects {
 
     removeShape$ = createEffect(() => this.actions$.pipe(
         ofType(DesignAction.removeShapeAction),
-        switchMap(item => this.designService.removeShape(item.id).pipe(
+        switchMap(x => this.designService.removeShape(x.templateId, x.id).pipe(
+            map(() => {
+                return DesignAction.removeShapeFromStoreAction({id: x.id});
+            })
+        ))
+    ));
+
+    getTemplates$ = createEffect(() => this.actions$.pipe(
+        ofType(DesignAction.getTemplatesAction),
+        switchMap(item => this.designService.getTemplates().pipe(
             map(data => {
-                return DesignAction.removeShapeFromStoreAction({id: item.id});
+                return DesignAction.saveTemplatesToStoreAction({ payload: data});
+            })
+        ))
+    ));
+
+    addTemplate$ = createEffect(() => this.actions$.pipe(
+        ofType(DesignAction.addTemplateAction),
+        switchMap(item => this.designService.addTemplate(item.payload).pipe(
+            map(data => {
+                return DesignAction.addTemplateToStoreAction({payload: data});
+            })
+        ))
+    ));
+
+    updateTemplate$ = createEffect(() => this.actions$.pipe(
+        ofType(DesignAction.updateTemplateAction),
+        switchMap(item => this.designService.updateTemplate(item.payload).pipe(
+            map(data => {
+                return DesignAction.updateTemplateToStoreAction({payload: data});
+            })
+        ))
+    ));
+
+    removeTemplate$ = createEffect(() => this.actions$.pipe(
+        ofType(DesignAction.deleteTemplateAction),
+        switchMap(item => this.designService.removeTemplate(item.id).pipe(
+            map(data => {
+                return DesignAction.deleteTemplateToStoreAction({id: item.id});
+            })
+        ))
+    ));
+
+    markTemplateAsDefault$ = createEffect(() => this.actions$.pipe(
+        ofType(DesignAction.markTemplateAsDefaultAction),
+        switchMap(item => this.designService.markTemplateAsDefault(item.id).pipe(
+            map(data => {
+                return DesignAction.saveTemplatesToStoreAction({ payload: data });
             })
         ))
     ));

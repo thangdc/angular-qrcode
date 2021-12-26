@@ -27,16 +27,29 @@
     </ul>   
     <div class="tab-content mt-2" [formGroup]="configForm">
         <div class="tab-pane fade show active" id="general" role="tabpanel">
+            <div class="row mb-3">
+                <div class="col">
+                    <label>Tên</label>
+                    <input type="text" class="form-control" formControlName="name" />
+                </div>
+                <div class="col-3 mt-4 form-check form-switch align-middle">
+                    <label class="form-check-label">
+                        Hiện/Ẩn
+                        <input class="form-check-input" formControlName="isShow" type="checkbox" />
+                    </label>
+                </div>
+            </div>
+            
             <div class="d-flex mb-3">
                 <div class="flex-fill me-2">
-                    <label>Trái</label>
+                    <label>Trên</label>
                     <input type="number" class="form-control" formControlName="left" [ngClass]="{ 'is-invalid': configForm.controls.left.invalid }" />
                     <div class="invalid-feedback" *ngIf="configForm.controls.left.invalid">
                         <p *ngIf="configForm.controls.left.errors.required">Vui lòng nhập trái.</p>
                     </div>
                 </div>
                 <div class="flex-fill me-2">
-                    <label>Trên</label>
+                    <label>Trái</label>
                     <input type="number" class="form-control" formControlName="top" [ngClass]="{ 'is-invalid': configForm.controls.top.invalid }" />
                     <div class="invalid-feedback" *ngIf="configForm.controls.top.invalid">
                         <p *ngIf="configForm.controls.top.errors.required">Vui lòng nhập trên.</p>
@@ -90,10 +103,10 @@
                 </div>
             </div>
             <div class="d-flex mb-3">
-                <div>
-                    <label>Index</label>
+                <div class="mx-1">
+                    <label>Layer</label>
                     <input type="number" class="form-control" formControlName="index" />
-                </div>       
+                </div>  
             </div>
 
             <input type="hidden" formControlName="id" />

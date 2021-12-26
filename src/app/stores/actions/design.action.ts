@@ -1,5 +1,5 @@
 import { createAction, props } from "@ngrx/store";
-import { ShapeModel } from "src/app/shared/models";
+import { ShapeModel, TemplateModel } from "src/app/shared/models";
 
 const SAVE_DATA = "[Design] Save data";
 const SAVE_DATA_SUCCESS = "[Design] Save data successfully";
@@ -15,7 +15,6 @@ const DRAW_IMAGE = "[Desgin] Draw image";
 const REMOVE_IMAGE = "[Design] Remove image";
 const REMOVE_IMAGE_IN_STORE = "[Design] Remove image in store";
 
-const UPDATE_TEMPLATE = "[Design] Update template";
 const ADD_SHAPE = "[Design] Add shape";
 const SAVE_SHAPE_TO_STORE = "[Design] Save shape to store";
 const GET_SHAPES = "[Design] Get shape";
@@ -30,13 +29,27 @@ const REMOVE_SHAPE_FROM_STORE = "[Design] Remove shape from store";
 const SElECTED_SHAPE = "[Design] Selected shape";
 const EXPORT_DESIGN = "[Design] Export design";
 
+const GET_TEMPLATES = "[Design] Get template";
+const ADD_TEMPLATE = "[Design] Add template";
+const UPDATE_TEMPLATE = "[Design] Update template";
+const DELETE_TEMPLATE = "[Desgin] Delete template";
+const MARK_TEMPLATE_AS_DEFAULT = "[Design] Mark template as default";
+const GET_DEFAULT_TEMPLATE = "[Desgin] Get default template";
+
+const GET_TEMPLATES_TO_STORE = "[Design] Get template and update to store";
+const ADD_TEMPLATE_TO_STORE = "[Design] Add template to store";
+const UPDATE_TEMPLATE_TO_STORE = "[Design] Update template to store";
+const DELETE_TEMPLATE_TO_STORE = "[Desgin] Delete template to store";
+
+
 export const loadDataAction = createAction(
-    LOAD_DATA
+    LOAD_DATA,
+    props<{ templateId: number }>()
 )
 
 export const saveDataAction = createAction(
     SAVE_DATA,
-    props<{payload: string}>()
+    props<{ templateId: number, payload: string}>()
 )
 
 export const saveDataSuccess = createAction(
@@ -51,7 +64,7 @@ export const loadDataSuccess = createAction(
 
 export const addImageAction = createAction(
     ADD_IMAGE,
-    props<{payload: any}>()
+    props<{ templateId: number, payload: any }>()
 )
 
 export const addImageToStoreAction = createAction(
@@ -60,7 +73,8 @@ export const addImageToStoreAction = createAction(
 )
 
 export const loadImageAction = createAction(
-    LOAD_IMAGE
+    LOAD_IMAGE,
+    props<{ templateId: number }>()
 )
 
 export const saveImageToStoreAction = createAction(
@@ -75,7 +89,7 @@ export const drawImageAction = createAction(
 
 export const removeImageAction = createAction(
     REMOVE_IMAGE,
-    props<{ payload: any}>()
+    props<{ templateId: number, payload: any}>()
 )
 
 export const removeImageInStoreAction = createAction(
@@ -83,14 +97,57 @@ export const removeImageInStoreAction = createAction(
     props<{ payload: any}>()
 )
 
+export const getTemplatesAction = createAction(
+    GET_TEMPLATES
+)
+
+export const saveTemplatesToStoreAction = createAction(
+    GET_TEMPLATES_TO_STORE,
+    props<{ payload: TemplateModel[] }>()
+)
+
+export const addTemplateAction = createAction(
+    ADD_TEMPLATE,
+    props<{ payload: TemplateModel }>()
+)
+
+export const addTemplateToStoreAction = createAction(
+    ADD_TEMPLATE_TO_STORE,
+    props<{ payload: TemplateModel }>()
+)
+
 export const updateTemplateAction = createAction(
     UPDATE_TEMPLATE,
-    props<{ payload: any}>()
+    props<{ payload: TemplateModel }>()
+)
+
+export const updateTemplateToStoreAction = createAction(
+    UPDATE_TEMPLATE_TO_STORE,
+    props<{ payload: TemplateModel }>()
+)
+
+export const deleteTemplateAction = createAction(
+    DELETE_TEMPLATE,
+    props<{ id: number }>()
+)
+
+export const markTemplateAsDefaultAction = createAction(
+    MARK_TEMPLATE_AS_DEFAULT,
+    props<{ id: number }>()
+)
+
+export const getDefaultTemplateAction = createAction(
+    GET_DEFAULT_TEMPLATE
+)
+
+export const deleteTemplateToStoreAction = createAction(
+    DELETE_TEMPLATE_TO_STORE,
+    props<{ id: number }>()
 )
 
 export const addShapeAction = createAction(
     ADD_SHAPE,
-    props<{ payload: ShapeModel}>()
+    props<{ templateId: number, payload: ShapeModel}>()
 )
 
 export const saveShapeToStoreAction = createAction(
@@ -99,7 +156,8 @@ export const saveShapeToStoreAction = createAction(
 )
 
 export const getShapesAction = createAction(
-    GET_SHAPES
+    GET_SHAPES,
+    props<{ templateId: number }>()
 )
 
 export const saveShapesToStoreAction = createAction(
@@ -109,7 +167,7 @@ export const saveShapesToStoreAction = createAction(
 
 export const updateShapeAction = createAction(
     UPDATE_SHAPE,
-    props<{payload: any}>()
+    props<{ templateId: number, payload: any}>()
 )
 
 export const updateShapeToStoreAction = createAction(
@@ -129,7 +187,7 @@ export const selectShapeAction = createAction(
 
 export const removeShapeAction = createAction(
     REMOVE_SHAPE,
-    props<{ id: number }>()
+    props<{ templateId: number, id: number }>()
 )
 
 export const removeShapeFromStoreAction = createAction(

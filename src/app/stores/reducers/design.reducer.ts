@@ -1,8 +1,9 @@
 import { Action, createReducer, on } from '@ngrx/store';
-import { ShapeModel } from 'src/app/shared/models';
+import { ShapeModel, TemplateModel } from 'src/app/shared/models';
 import * as DesignAction from '../actions/design.action';
 
 export interface DesignState {
+    templates: TemplateModel[];
     images: any[];
     shapes: ShapeModel[];
     data: string;    
@@ -15,6 +16,7 @@ export interface DesignState {
 }
 
 export const initialDesignState: DesignState = {
+    templates: [],
     images: [],
     shapes: [],
     data: null,
@@ -33,7 +35,6 @@ const reducer = createReducer(
     on(DesignAction.saveImageToStoreAction, (state, action) => ({...state, images: action.payload ?? [] })),
     on(DesignAction.drawImageAction, (state, action) => ({...state, events: { ...state.events, image: action.payload } })),
     on(DesignAction.removeImageInStoreAction, (state, action) => ({...state, images: action.payload })),
-    on(DesignAction.updateTemplateAction, (state, action) => ({...state, events: { ...state.events, template: action.payload } })),
     on(DesignAction.saveShapeToStoreAction, (state, action) => ({...state, shapes: [...state.shapes, action.payload ]})),
     on(DesignAction.saveShapesToStoreAction, (state, action) => ({...state, shapes: action.payload ?? [] })),
     on(DesignAction.updateShapeToStoreAction, (state, action) => {
@@ -51,7 +52,21 @@ const reducer = createReducer(
         const shapes = state.shapes.filter(x => x.id !== action.id);
         return ({ ...state, shapes: shapes})
     }),
-    on(DesignAction.exportDesignAction, (state, action) => ({...state, events: { ...state.events, export: action.payload }}))
+    on(DesignAction.exportDesignAction, (state, action) => ({...state, events: { ...state.events, export: action.payload }})),
+    on(DesignAction.addTemplateToStoreAction, (state, action) => ({...state, templates: [...state.templates, action.payload ]})),
+    on(DesignAction.updateTemplateToStoreAction, (state, action) => {
+        let index = state.templates.map(x => x.id).indexOf(action.payload.id);
+        const newArray = [...state.templates];
+        newArray[index] = action.payload;
+        return {...state, templates: newArray };
+    }),
+    on(DesignAction.deleteTemplateToStoreAction, (state, action) => {
+        const templates = state.templates.filter(x => x.id !== action.id);
+        return ({...state, templates: templates})
+    }),
+    on(DesignAction.saveTemplatesToStoreAction, (state, action) => {
+        return ({...state, templates: action.payload})
+    })
 );
   
 export function designReducer(state: DesignState | undefined, action: Action) {
@@ -65,3 +80,5 @@ export const getDrawImageReducer = (state: DesignState) => state.events?.image;
 export const getTemplateReducer = (state: DesignState) => state.events?.template;
 export const getShapeReducer = (state: DesignState) => state.events?.shape;
 export const getExportReducer = (state: DesignState) => state.events?.export;
+export const getTemplatesReducer = (state: DesignState) => state.templates;
+export const getDefaultTemplateReducer = (state: DesignState) => state.templates.find(x => x.isDefault === true);

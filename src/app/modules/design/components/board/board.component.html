@@ -1,7 +1,39 @@
 <app-toolbar></app-toolbar>
 
-<div class="board">
-    <div id="container" 
-    [style.width.px]="template.width" 
-    [style.height.px]="template.height"></div>
+<div class="row g-0">
+    <div class="col">
+        <div class="board">
+            <div id="container" 
+            [style.width.px]="template.width" 
+            [style.height.px]="template.height"></div>
+        </div>
+    </div>
+    <div class="col-4 mx-1">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th style="width: 20px;"><input type="checkbox" /></th> 
+                    <th>Tên</th>
+                    <th>Token</th>
+                    <th style="width: 80px;">Hiển thị</th>
+                    <th style="width: 20px;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let item of elements">
+                    <td><input type="checkbox" [value]="item.id" /></td> 
+                    <td><a href="#" (click)="editShape(item)">{{ item.name }}</a></td>
+                    <td>{{ showToken(item.name) }}</td>
+                    <td class="text-center">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" [checked]="item.isShow" (change)="updateShape($event, item)" role="switch" />
+                        </div>
+                    </td>
+                    <td>
+                        <a (click)="removeShape(item.id)"><span class="fas fa-trash mx-1"></span></a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </div>
