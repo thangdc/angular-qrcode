@@ -42,7 +42,7 @@ export class BoardComponent implements OnInit {
   container: string = 'container';
   GUIDELINE_OFFSET: number = 5;
 
-  isFirstExport: boolean = true;
+  exportNumber: number = 0;
 
   constructor(private store: Store,
     private modal: NgbModal) {
@@ -718,17 +718,15 @@ export class BoardComponent implements OnInit {
   export(item) {
     const that = this;
     let fileName = '';
+    if (this.exportNumber > 0) {
+      this.exportNumber = 0;
+      return;
+    }
     if (item.type === 'pdf') {
       const pdf = new jsPDF('l', 'px', [that.stage.width(), that.stage.height()]);
       // then put image on top of texts (so texts are not visible)
-      const dataURL = that.stage.toDataURL({ pixelRatio: 3 });
-      pdf.addImage(
-        dataURL,
-        0,
-        0,
-        that.stage.width(),
-        that.stage.height()
-      );
+      const dataURL = that.stage.toDataURL({ pixelRatio: 1 });
+      pdf.addImage(dataURL, 0, 0, that.stage.width(), that.stage.height());
       fileName = `${item.name}.pdf`;
       pdf.save(fileName);
     } else if (item.type === 'image') {
@@ -738,7 +736,7 @@ export class BoardComponent implements OnInit {
     } else if (item.type === 'template') {
       alert(item.name);
     }
-    that.isFirstExport = false;
+    this.exportNumber++;
   }
 
   downloadURI(uri, name) {
@@ -753,7 +751,7 @@ export class BoardComponent implements OnInit {
   bindExportEvent() {
     const that = this;
     that.store.select(getExportSelector).subscribe(data => {
-      if (data && this.isFirstExport) {
+      if (data) {
         that.export(data);
       }
       that.store.dispatch(exportDesignAction({payload: null}));
