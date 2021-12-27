@@ -723,9 +723,9 @@ export class BoardComponent implements OnInit {
       return;
     }
     if (item.type === 'pdf') {
-      const pdf = new jsPDF('l', 'px', [that.stage.width(), that.stage.height()]);
+      const pdf = new jsPDF('p', 'px', [that.stage.width(), that.stage.height()]);
       // then put image on top of texts (so texts are not visible)
-      const dataURL = that.stage.toDataURL({ pixelRatio: 1 });
+      const dataURL = that.stage.toDataURL({ pixelRatio: 3 });
       pdf.addImage(dataURL, 0, 0, that.stage.width(), that.stage.height());
       fileName = `${item.name}.pdf`;
       pdf.save(fileName);
